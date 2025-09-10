@@ -28,6 +28,7 @@ router.delete("/:id", async (req, res) => {
   res.json({ message: "Product deleted" });
 });
 
+
 // Recommendation (rule-based)
 router.get("/:id/recommendations", async (req, res) => {
   const product = await Product.findById(req.params.id);
@@ -37,12 +38,13 @@ router.get("/:id/recommendations", async (req, res) => {
     _id: { $ne: product._id },
     $or: [
       { category: product.category },
-      { price: { $gte: product.price - 50, $lte: product.price + 50 } },
-      { tags: { $in: product.tags } }
+      { price: { $gte: product.price - 5000, $lte: product.price + 5000 } },
+      { tags: { $in: product.tags || [] } }
     ]
   }).limit(5);
 
   res.json(recommendations);
 });
+
 
 export default router;
