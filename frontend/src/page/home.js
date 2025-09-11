@@ -566,7 +566,7 @@ export default function FashionEcommerce() {
           <div style={{ textAlign: "center", padding: "4rem 0" }}>No products found for this category.</div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "2rem", marginBottom: "3rem" }}>
-            {filteredProducts.slice(0, 8).map((product) => {
+            {filteredProducts.slice(0, 100).map((product) => {
               const pid = String(product.id);
               const isFav = isFavorited(pid);
               const imgSrc = product.image ? product.image : fallbackImage;
