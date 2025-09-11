@@ -190,5 +190,3 @@ npm start
 ✨ *This project was built as part of an Internship Assignment to demonstrate MERN skills, CRUD operations, file uploads, and recommendation logic.*
 
 
-Would you like me to also **add example screenshots/usage GIFs section** (like product CRUD, recommendations, wishlist demo) to make your README more impressive for the internship reviewers?
-```
