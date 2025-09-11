@@ -1,7 +1,10 @@
 // src/pages/ProductManagement.jsx
 import React, { useState, useEffect } from 'react';
 import { Plus, X, Upload, Package, Save, Check, Palette } from 'lucide-react';
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
 import Header from '../component/Header';
+import Footer from "../component/Footer";
 
 export default function ProductManagement() {
   const [formData, setFormData] = useState({
@@ -10,25 +13,27 @@ export default function ProductManagement() {
     category: '',
     tags: [],
     colors: [],
+    sizes: [],
     description: '',
-    images: [] // we'll keep this for compatibility, but send single image as `image`
+    images: []
   });
 
   const [tagInput, setTagInput] = useState('');
   const [colorInput, setColorInput] = useState('');
+  const [sizeInput, setSizeInput] = useState('');
   const [colorPickerValue, setColorPickerValue] = useState('#000000');
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const categories = [
-    "All","Mens", "Womans", "Kids", "Accessories"
+    "Mens", "Womans", "Kids", "Accessories"
   ];
 
   // Predefined color options for quick selection
   const popularColors = [
     { name: 'Red', value: '#ef4444' },
     { name: 'Blue', value: '#3b82f6' },
-    { name: 'Green', value: '#10b981' },
+    { name: 'Green', value: '#5b5b5bff' },
     { name: 'Yellow', value: '#f59e0b' },
     { name: 'Purple', value: '#8b5cf6' },
     { name: 'Pink', value: '#ec4899' },
@@ -39,6 +44,9 @@ export default function ProductManagement() {
     { name: 'Navy', value: '#1e40af' },
     { name: 'Brown', value: '#92400e' }
   ];
+
+  // Predefined size options (user requested M, L, Xl, XXl, XXXl)
+  const predefinedSizes = ['M', 'L', 'XL', 'XXL', 'XXXL'];
 
   useEffect(() => {
     // load draft if exists
@@ -133,6 +141,37 @@ export default function ProductManagement() {
     }));
   };
 
+  // --- Sizes handlers (new) ---
+  const addSize = (size) => {
+    if (!size) return;
+    const s = size.trim();
+    if (!s) return;
+    // normalize to same case for duplicates but preserve user's input display
+    if (!formData.sizes.includes(s)) {
+      setFormData(prev => ({
+        ...prev,
+        sizes: [...prev.sizes, s]
+      }));
+    }
+    setSizeInput('');
+  };
+
+  const removeSize = (sizeToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      sizes: prev.sizes.filter(s => s !== sizeToRemove)
+    }));
+  };
+
+  // handle custom size input "Enter"
+  const onSizeInputKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addSize(sizeInput);
+    }
+  };
+  // --- end sizes handlers ---
+
   const handleImageUpload = (e) => {
     const file = e.target.files && e.target.files[0];
     if (file) {
@@ -156,7 +195,12 @@ export default function ProductManagement() {
       imagePreview
     };
     localStorage.setItem('productDraft', JSON.stringify(draft));
-    alert('Draft saved locally.');
+    // replaced alert with SweetAlert
+    Swal.fire({
+      icon: 'success',
+      title: 'Draft saved',
+      text: 'Draft saved locally.'
+    });
   };
 
   const validateForm = () => {
@@ -180,7 +224,12 @@ export default function ProductManagement() {
   const handleAddProduct = async () => {
     const err = validateForm();
     if (err) {
-      alert(err);
+      // replaced alert with SweetAlert
+      Swal.fire({
+        icon: 'warning',
+        title: 'Validation error',
+        text: err
+      });
       return;
     }
 
@@ -192,11 +241,21 @@ export default function ProductManagement() {
       category: formData.category,
       tags: formData.tags,
       colors: formData.colors,
+      sizes: formData.sizes, // <-- include sizes in payload
       description: formData.description.trim(),
       image: imagePreview || (formData.images && formData.images[0]) || ''
     };
 
     try {
+      // show loading modal using SweetAlert
+      Swal.fire({
+        title: 'Adding product...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
       const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
       const res = await fetch(`${API_BASE}/api/products`, {
         method: 'POST',
@@ -219,19 +278,34 @@ export default function ProductManagement() {
         category: '',
         tags: [],
         colors: [],
+        sizes: [], // <-- reset sizes
         description: '',
         images: []
       });
       setImagePreview(null);
       setColorInput('');
       setColorPickerValue('#000000');
+      setSizeInput('');
       localStorage.removeItem('productDraft');
 
-      alert('Product added successfully!');
+      // close loading and show success
+      Swal.close();
+      Swal.fire({
+        icon: 'success',
+        title: 'Product added',
+        text: 'Product added successfully!'
+      });
+
       console.log('Added product:', result);
     } catch (error) {
       console.error('Add product error:', error);
-      alert(`Failed to add product: ${error.message}`);
+      // close loading and show error
+      Swal.close();
+      Swal.fire({
+        icon: 'error',
+        title: 'Failed to add product',
+        text: error.message
+      });
     } finally {
       setLoading(false);
     }
@@ -243,7 +317,7 @@ export default function ProductManagement() {
       return { backgroundColor: colorValue, border: '1px solid #d1d5db' };
     }
     // For named colors, try to find matching popular color
-    const popularColor = popularColors.find(pc => 
+    const popularColor = popularColors.find(pc =>
       pc.name.toLowerCase() === colorValue.toLowerCase()
     );
     if (popularColor) {
@@ -283,8 +357,8 @@ export default function ProductManagement() {
             }}>
               <Package size={24} style={{ color: '#374151' }} />
               <h1 style={{
-                fontSize: '1.75rem',
-                fontWeight: '700',
+                fontSize: '1.35rem',
+                fontWeight: '500',
                 color: '#111827',
                 margin: 0
               }}>
@@ -324,7 +398,7 @@ export default function ProductManagement() {
                   alignItems: 'center',
                   gap: '0.5rem',
                   padding: '0.75rem 1.5rem',
-                  backgroundColor: loading ? '#6ee7b7' : '#10b981',
+                  backgroundColor: loading ? '#817f7fff' : '#5b5b5bff',
                   border: 'none',
                   borderRadius: '0.5rem',
                   color: 'white',
@@ -387,7 +461,7 @@ export default function ProductManagement() {
                       boxSizing: 'border-box',
                       transition: 'border-color 0.2s ease'
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#10b981'}
+                    onFocus={(e) => e.target.style.borderColor = '#5b5b5bff'}
                     onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                   />
                 </div>
@@ -417,7 +491,7 @@ export default function ProductManagement() {
                       boxSizing: 'border-box',
                       transition: 'border-color 0.2s ease'
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#10b981'}
+                    onFocus={(e) => e.target.style.borderColor = '#5b5b5bff'}
                     onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                   />
                 </div>
@@ -475,7 +549,7 @@ export default function ProductManagement() {
                         boxSizing: 'border-box',
                         transition: 'border-color 0.2s ease'
                       }}
-                      onFocus={(e) => e.target.style.borderColor = '#10b981'}
+                      onFocus={(e) => e.target.style.borderColor = '#5b5b5bff'}
                       onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                     />
                   </div>
@@ -520,14 +594,14 @@ export default function ProductManagement() {
                         fontSize: '0.875rem',
                         transition: 'border-color 0.2s ease'
                       }}
-                      onFocus={(e) => e.target.style.borderColor = '#10b981'}
+                      onFocus={(e) => e.target.style.borderColor = '#5b5b5bff'}
                       onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                     />
                     <button
                       onClick={addTag}
                       style={{
                         padding: '0.75rem',
-                        backgroundColor: '#10b981',
+                        backgroundColor: '#5b5b5bff',
                         border: 'none',
                         borderRadius: '0.5rem',
                         color: 'white',
@@ -554,7 +628,7 @@ export default function ProductManagement() {
                         alignItems: 'center',
                         gap: '0.25rem',
                         backgroundColor: '#e5f3f0',
-                        color: '#047857',
+                        color: '#363636ff',
                         padding: '0.25rem 0.5rem',
                         borderRadius: '0.375rem',
                         fontSize: '0.75rem',
@@ -571,8 +645,177 @@ export default function ProductManagement() {
                   ))}
                 </div>
 
-                {/* Enhanced Colors UI */}
+                {/* Sizes UI (NEW) */}
                 <div style={{ marginTop: '0.5rem' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <label style={{
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151'
+                    }}>
+                      Sizes
+                    </label>
+                  </div>
+
+                  <div style={{
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '0.75rem',
+                    padding: '1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <div style={{
+                      fontSize: '0.75rem',
+                      fontWeight: '500',
+                      color: '#475569',
+                      marginBottom: '0.75rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.025em'
+                    }}>
+                      Quick Sizes
+                    </div>
+
+                    <div style={{
+                      display: 'flex',
+                      gap: '0.5rem',
+                      flexWrap: 'wrap'
+                    }}>
+                      {predefinedSizes.map(sz => {
+                        const selected = formData.sizes.includes(sz);
+                        return (
+                          <button
+                            key={sz}
+                            onClick={() => addSize(sz)}
+                            disabled={selected}
+                            style={{
+                              padding: '0.5rem 0.75rem',
+                              backgroundColor: selected ? '#5b5b5bff' : 'white',
+                              color: selected ? 'white' : '#374151',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '0.5rem',
+                              cursor: selected ? 'not-allowed' : 'pointer',
+                              opacity: selected ? 0.9 : 1,
+                              fontSize: '0.875rem',
+                              fontWeight: 600
+                            }}
+                          >
+                            {sz}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div style={{
+                    backgroundColor: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '0.75rem',
+                    padding: '1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <div style={{
+                      fontSize: '0.75rem',
+                      fontWeight: '500',
+                      color: '#475569',
+                      marginBottom: '0.75rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.025em'
+                    }}>
+                      Custom Size
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input
+                        type="text"
+                        value={sizeInput}
+                        onChange={(e) => setSizeInput(e.target.value)}
+                        onKeyDown={onSizeInputKeyDown}
+                        placeholder="Enter custom size (e.g., S, XS, Custom)"
+                        style={{
+                          flex: 1,
+                          padding: '0.75rem',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '0.5rem',
+                          fontSize: '0.875rem',
+                          transition: 'border-color 0.2s ease'
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = '#5b5b5bff'}
+                        onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                      />
+                      <button
+                        onClick={() => addSize(sizeInput)}
+                        style={{
+                          padding: '0.75rem',
+                          backgroundColor: '#5b5b5bff',
+                          border: 'none',
+                          borderRadius: '0.5rem',
+                          color: 'white',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s ease'
+                        }}
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Selected Sizes Display */}
+                  {formData.sizes.length > 0 && (
+                    <div>
+                      <div style={{
+                        fontSize: '0.75rem',
+                        fontWeight: '500',
+                        color: '#475569',
+                        marginBottom: '0.75rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.025em'
+                      }}>
+                        Selected Sizes ({formData.sizes.length})
+                      </div>
+
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        {formData.sizes.map((s, idx) => (
+                          <span
+                            key={idx}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              backgroundColor: 'white',
+                              padding: '0.5rem 0.75rem',
+                              borderRadius: '0.5rem',
+                              fontSize: '0.75rem',
+                              fontWeight: '500',
+                              border: '1px solid #e5e7eb',
+                              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                            }}
+                          >
+                            <span style={{ color: '#374151' }}>{s}</span>
+                            <X
+                              size={14}
+                              style={{
+                                cursor: 'pointer',
+                                color: '#9ca3af',
+                                marginLeft: '0.25rem'
+                              }}
+                              onClick={() => removeSize(s)}
+                              onMouseOver={(e) => e.target.style.color = '#ef4444'}
+                              onMouseOut={(e) => e.target.style.color = '#9ca3af'}
+                            />
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {/* end Sizes */}
+
+                {/* Enhanced Colors UI */}
+                <div style={{ marginTop: '1.25rem' }}>
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -606,7 +849,7 @@ export default function ProductManagement() {
                     }}>
                       Color Picker
                     </div>
-                    
+
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -675,7 +918,7 @@ export default function ProductManagement() {
                     }}>
                       Popular Colors
                     </div>
-                    
+
                     <div style={{
                       display: 'grid',
                       gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
@@ -701,7 +944,7 @@ export default function ProductManagement() {
                           }}
                           onMouseOver={(e) => {
                             if (!e.target.disabled) {
-                              e.target.style.borderColor = '#10b981';
+                              e.target.style.borderColor = '#5b5b5bff';
                               e.target.style.transform = 'translateY(-1px)';
                             }
                           }}
@@ -749,7 +992,7 @@ export default function ProductManagement() {
                     }}>
                       Custom Color
                     </div>
-                    
+
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <input
                         type="text"
@@ -770,14 +1013,14 @@ export default function ProductManagement() {
                           fontSize: '0.875rem',
                           transition: 'border-color 0.2s ease'
                         }}
-                        onFocus={(e) => e.target.style.borderColor = '#10b981'}
+                        onFocus={(e) => e.target.style.borderColor = '#5b5b5bff'}
                         onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
                       />
                       <button
                         onClick={addColor}
                         style={{
                           padding: '0.75rem',
-                          backgroundColor: '#10b981',
+                          backgroundColor: '#5b5b5bff',
                           border: 'none',
                           borderRadius: '0.5rem',
                           color: 'white',
@@ -803,7 +1046,7 @@ export default function ProductManagement() {
                       }}>
                         Selected Colors ({formData.colors.length})
                       </div>
-                      
+
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                         {formData.colors.map((c, idx) => (
                           <span
@@ -833,7 +1076,7 @@ export default function ProductManagement() {
                             <span style={{ color: '#374151' }}>{c}</span>
                             <X
                               size={14}
-                              style={{ 
+                              style={{
                                 cursor: 'pointer',
                                 color: '#9ca3af',
                                 marginLeft: '0.25rem'
@@ -883,7 +1126,7 @@ export default function ProductManagement() {
                 }}
                   onDragOver={(e) => {
                     e.preventDefault();
-                    e.currentTarget.style.borderColor = '#10b981';
+                    e.currentTarget.style.borderColor = '#5b5b5bff';
                   }}
                   onDragLeave={(e) => {
                     e.currentTarget.style.borderColor = '#d1d5db';
@@ -971,7 +1214,7 @@ export default function ProductManagement() {
                       boxSizing: 'border-box',
                       transition: 'border-color 0.2s ease'
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#10b981'}
+                    onFocus={(e) => e.target.style.borderColor = '#5b5b5bff'}
                     onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                   >
                     <option value="">Select a category</option>
@@ -1006,6 +1249,7 @@ export default function ProductManagement() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

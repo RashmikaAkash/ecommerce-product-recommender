@@ -1,4 +1,3 @@
-// backend/server.js
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -8,6 +7,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
 
+// Load environment variables
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -49,13 +49,59 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
+let server = null;
+
+// Connect to MongoDB (no deprecated options)
 mongoose
-  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB Connected");
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
   .catch((err) => {
     console.error("Failed to connect to MongoDB:", err);
     process.exit(1);
   });
+
+// Listen for mongoose connection errors after initial connect
+mongoose.connection.on("error", (err) => {
+  console.error("MongoDB connection error:", err);
+});
+
+// Graceful shutdown helper
+const gracefulShutdown = async (signal) => {
+  try {
+    console.log(`${signal} received: closing HTTP server and MongoDB connection...`);
+    if (server) {
+      // stop accepting new connections
+      server.close(() => console.log("HTTP server closed"));
+    }
+
+    // close mongoose connection
+    await mongoose.connection.close(false);
+    console.log("Mongoose connection closed");
+
+    // give processes a moment to finish
+    setTimeout(() => process.exit(0), 500);
+  } catch (err) {
+    console.error("Error during graceful shutdown:", err);
+    process.exit(1);
+  }
+};
+
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+
+// Catch unhandled promise rejections and uncaught exceptions
+process.on("unhandledRejection", (reason, p) => {
+  console.error("Unhandled Rejection at:", p, "reason:", reason);
+  // optionally: trigger graceful shutdown
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception thrown:", err);
+  // it's unsafe to continue after an uncaught exception
+  process.exit(1);
+});
+
+export default app;

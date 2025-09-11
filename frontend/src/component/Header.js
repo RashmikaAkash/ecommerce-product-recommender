@@ -1,14 +1,10 @@
 import React from 'react';
-import { Search, Heart, ShoppingCart, User, Menu } from 'lucide-react';
 
 const Header = () => {
   const navLinks = [
     { label: 'Home', path: '/' },
     { label: 'Add Product', path: '/add-product' },
-    { label: 'Shop', path: '/product' },
-    { label: 'Pages', path: '/pages' },
-    { label: 'About', path: '/about' },
-    { label: 'Contact', path: '/contact' }
+    { label: 'Manage Product', path: '/product' }
   ];
 
   return (
@@ -28,7 +24,7 @@ const Header = () => {
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
-        
+
         {/* Logo */}
         <div style={{
           fontSize: '1.5rem',
@@ -38,7 +34,7 @@ const Header = () => {
         }}>
           OLIVIA GREY.
         </div>
-        
+
         {/* Navigation */}
         <nav style={{ display: 'flex', gap: '2rem' }}>
           {navLinks.map((link) => (
@@ -59,15 +55,6 @@ const Header = () => {
             </a>
           ))}
         </nav>
-        
-        {/* Icons */}
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <Search size={20} style={{ color: '#666', cursor: 'pointer' }} />
-          <Heart size={20} style={{ color: '#666', cursor: 'pointer' }} />
-          <ShoppingCart size={20} style={{ color: '#666', cursor: 'pointer' }} />
-          <User size={20} style={{ color: '#666', cursor: 'pointer' }} />
-          <Menu size={20} style={{ color: '#666', cursor: 'pointer' }} />
-        </div>
       </div>
     </header>
   );

@@ -21,27 +21,92 @@ if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
-    // unique filename: timestamp + originalname
+    // unique filename: timestamp + originalname (sanitized)
     const unique = `${Date.now()}-${file.originalname.replace(/\s+/g, "-")}`;
     cb(null, unique);
   }
 });
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB max
 
-// Helper: clean and parse price from various inputs like "$100", "100,00", "100.00"
+// only allow common image MIME types
+function imageFileFilter(req, file, cb) {
+  const allowed = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif", "image/svg+xml"];
+  if (allowed.includes(file.mimetype)) cb(null, true);
+  else cb(new Error("Only image files are allowed (png, jpg, jpeg, webp, gif, svg)."), false);
+}
+
+const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: imageFileFilter }); // 5MB max
+
 function parseAndRoundPrice(raw) {
   if (raw == null) return null;
   const str = String(raw).trim();
   if (str === "") return null;
-  // keep digits, dot and minus
+
+  // if both separators present, assume the right-most is decimal
+  if (str.includes(",") && str.includes(".")) {
+    if (str.lastIndexOf(",") > str.lastIndexOf(".")) {
+      const cleaned = str.replace(/\./g, "").replace(",", ".");
+      const n = Number(cleaned);
+      return Number.isNaN(n) ? NaN : Math.round(n * 100) / 100;
+    } else {
+      const cleaned = str.replace(/,/g, "");
+      const n = Number(cleaned);
+      return Number.isNaN(n) ? NaN : Math.round(n * 100) / 100;
+    }
+  }
+
+  // only commas -> if single comma treat as decimal, else remove commas
+  if (str.includes(",") && !str.includes(".")) {
+    const parts = str.split(",");
+    if (parts.length === 2) {
+      const cleaned = parts.join(".");
+      const n = Number(cleaned);
+      return Number.isNaN(n) ? NaN : Math.round(n * 100) / 100;
+    } else {
+      const cleaned = str.replace(/,/g, "");
+      const n = Number(cleaned);
+      return Number.isNaN(n) ? NaN : Math.round(n * 100) / 100;
+    }
+  }
+
+  // fallback: keep digits, dot and minus, keep first dot only
   let cleaned = str.replace(/[^0-9.\-]/g, "");
-  // keep first dot only
   const parts = cleaned.split(".");
   if (parts.length > 2) cleaned = parts[0] + "." + parts.slice(1).join("");
   const num = Number(cleaned);
   if (Number.isNaN(num)) return NaN;
-  // round to 2 decimals
   return Math.round(num * 100) / 100;
+}
+
+// helper to delete local image file if it points to /uploads/*
+async function deleteLocalImageIfExists(imageUrl) {
+  if (!imageUrl) return;
+  try {
+    const urlObj = new URL(imageUrl);
+    const pathname = urlObj.pathname; // e.g. /uploads/1634234-name.png
+    if (!pathname.startsWith("/uploads/")) return;
+    const filePath = path.join(__dirname, "..", pathname);
+    if (fs.existsSync(filePath)) {
+      try { fs.unlinkSync(filePath); } catch (e) { /* ignore unlink errors */ }
+    }
+  } catch (err) {
+    // not a valid absolute URL — ignore
+  }
+}
+
+// normalize array fields that may arrive as JSON string or comma-separated
+function parseArrayField(maybe) {
+  if (maybe == null) return undefined;
+  if (Array.isArray(maybe)) return maybe;
+  if (typeof maybe === "string") {
+    const trimmed = maybe.trim();
+    if (trimmed === "") return [];
+    if (trimmed.startsWith("[")) {
+      try { return JSON.parse(trimmed); } catch { /* fall through */ }
+    }
+    return trimmed.split(",").map(s => s.trim()).filter(Boolean);
+  }
+  // fallback: wrap single value
+  return [String(maybe)];
 }
 
 // Create (JSON)
@@ -52,27 +117,19 @@ router.post("/", async (req, res, next) => {
     // Defensive price parsing
     if (body.price != null) {
       const parsed = parseAndRoundPrice(body.price);
-      if (Number.isNaN(parsed)) return res.status(400).json({ message: "Invalid price" });
-      if (parsed == null) return res.status(400).json({ message: "Invalid price" });
+      if (Number.isNaN(parsed) || parsed == null) return res.status(400).json({ message: "Invalid price" });
       body.price = parsed;
     }
 
-    // If tags/colors are strings, attempt to normalize common formats
-    if (typeof body.tags === "string") {
-      try {
-        body.tags = body.tags.trim().startsWith("[") ? JSON.parse(body.tags) : body.tags.split(",").map(t => t.trim()).filter(Boolean);
-      } catch {
-        body.tags = body.tags.split(",").map(t => t.trim()).filter(Boolean);
-      }
-    }
+    // Normalize tags/colors/sizes if passed as strings
+    const tags = parseArrayField(body.tags);
+    if (tags !== undefined) body.tags = tags;
 
-    if (typeof body.colors === "string") {
-      try {
-        body.colors = body.colors.trim().startsWith("[") ? JSON.parse(body.colors) : body.colors.split(",").map(c => c.trim()).filter(Boolean);
-      } catch {
-        body.colors = body.colors.split(",").map(c => c.trim()).filter(Boolean);
-      }
-    }
+    const colors = parseArrayField(body.colors);
+    if (colors !== undefined) body.colors = colors;
+
+    const sizes = parseArrayField(body.sizes);
+    if (sizes !== undefined) body.sizes = sizes;
 
     const product = new Product(body);
     await product.save();
@@ -82,7 +139,7 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-// Read all
+// Read all (keeps original behavior: returns array)
 router.get("/", async (req, res, next) => {
   try {
     const { page = 1, limit = 50 } = req.query;
@@ -122,7 +179,7 @@ router.put("/:id", upload.single("image"), async (req, res, next) => {
     if (req.body.name != null) updates.name = req.body.name;
     if (req.body.price != null) {
       const parsed = parseAndRoundPrice(req.body.price);
-      if (Number.isNaN(parsed)) return res.status(400).json({ message: "Invalid price" });
+      if (Number.isNaN(parsed) || parsed == null) return res.status(400).json({ message: "Invalid price" });
       updates.price = parsed;
     }
     if (req.body.category != null) updates.category = req.body.category;
@@ -130,42 +187,26 @@ router.put("/:id", upload.single("image"), async (req, res, next) => {
 
     // tags can come as JSON string or comma separated
     if (req.body.tags != null) {
-      try {
-        const maybe = req.body.tags;
-        if (typeof maybe === "string" && maybe.trim().startsWith("[")) {
-          updates.tags = JSON.parse(maybe);
-        } else if (typeof maybe === "string") {
-          updates.tags = maybe.split(",").map(t => t.trim()).filter(Boolean);
-        } else {
-          updates.tags = maybe;
-        }
-      } catch {
-        updates.tags = String(req.body.tags).split(",").map((c) => c.trim()).filter(Boolean);
-      }
+      const maybe = req.body.tags;
+      updates.tags = parseArrayField(maybe) ?? [];
     }
 
     // colors can come as JSON string or comma separated
     if (req.body.colors != null) {
-      try {
-        const maybe = req.body.colors;
-        if (typeof maybe === "string" && maybe.trim().startsWith("[")) {
-          updates.colors = JSON.parse(maybe);
-        } else if (typeof maybe === "string") {
-          updates.colors = maybe
-            .split(",")
-            .map((c) => c.trim())
-            .filter(Boolean);
-        } else {
-          updates.colors = maybe;
-        }
-      } catch {
-        updates.colors = String(req.body.colors).split(",").map((c) => c.trim()).filter(Boolean);
-      }
+      const maybe = req.body.colors;
+      updates.colors = parseArrayField(maybe) ?? [];
+    }
+
+    // sizes can come as JSON string or comma separated
+    if (req.body.sizes != null) {
+      const maybe = req.body.sizes;
+      updates.sizes = parseArrayField(maybe) ?? [];
     }
 
     // handle uploaded image
     if (req.file) {
-      // optionally delete previous image file if it's local (not implemented here)
+      // delete previous local image if it was served from /uploads
+      await deleteLocalImageIfExists(existing.image);
       const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
       updates.image = imageUrl;
     }
@@ -185,13 +226,17 @@ router.delete("/:id", async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: "Invalid id" });
     const deleted = await Product.findByIdAndDelete(id);
     if (!deleted) return res.status(404).json({ message: "Product not found" });
+
+    // remove local image if present
+    await deleteLocalImageIfExists(deleted.image);
+
     res.json({ message: "Product deleted" });
   } catch (err) {
     next(err);
   }
 });
 
-// Recommendations route
+// Recommendations route (keeps existing logic)
 router.get("/:id/recommendations", async (req, res, next) => {
   try {
     const id = req.params.id;

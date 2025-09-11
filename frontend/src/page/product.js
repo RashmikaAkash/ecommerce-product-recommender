@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { ChevronDown, ChevronUp, X, Upload, Check } from "lucide-react";
 import Header from "../component/Header";
+import Footer from "../component/Footer";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
 
@@ -10,11 +11,8 @@ const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 const ClothingPage = () => {
   const [expandedSections, setExpandedSections] = useState({
     categories: true,
-    designers: false,
     priceRange: false,
     sizes: false,
-    print: false,
-    materials: false,
   });
 
   const toggleSection = (sectionKey) =>
@@ -24,6 +22,17 @@ const ClothingPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // filter state
+  const [filters, setFilters] = useState({
+    category: "",
+    priceMin: "",
+    priceMax: "",
+    sizes: []
+  });
+
+  // search state
+  const [search, setSearch] = useState("");
+
   // modal state
   const [isEditing, setIsEditing] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -31,8 +40,10 @@ const ClothingPage = () => {
   const [previewSrc, setPreviewSrc] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const categories = ["Shirts", "T-Shirts", "Pants", "Suits", "Jackets", "Accessories"];
-  
+  const [sizeInput, setSizeInput] = useState("");
+
+  const categories = ["Mens", "Womans", "Kids", "Accessories"];
+
   // Available colors with better visual representation
   const availableColors = [
     { name: "black", hex: "#000000", label: "Black" },
@@ -47,6 +58,9 @@ const ClothingPage = () => {
     { name: "green", hex: "#16a34a", label: "Green" },
     { name: "multicolor", hex: "linear-gradient(45deg,#ff6b6b,#4ecdc4,#45b7d1,#f9ca24)", label: "Multicolor" },
   ];
+
+  // sizes presets
+  const predefinedSizes = ['M', 'L', 'XL', 'XXL', 'XXXL'];
 
   // fetch
   const fetchProducts = async () => {
@@ -74,14 +88,79 @@ const ClothingPage = () => {
     fetchProducts();
   }, []);
 
+  // ---------- Filter helpers ----------
+  const toggleCategory = (cat) => {
+    setFilters((f) => ({ ...f, category: f.category === cat ? "" : cat }));
+  };
+
+  const setPriceMin = (v) => setFilters(f => ({ ...f, priceMin: v }));
+  const setPriceMax = (v) => setFilters(f => ({ ...f, priceMax: v }));
+  const resetPriceFilter = () => setFilters(f => ({ ...f, priceMin: "", priceMax: "" }));
+
+  const toggleFilterSize = (sz) => {
+    setFilters(prev => {
+      const sizes = prev.sizes || [];
+      return sizes.includes(sz)
+        ? { ...prev, sizes: sizes.filter(s => s !== sz) }
+        : { ...prev, sizes: [...sizes, sz] };
+    });
+  };
+
+  const clearSizesFilter = () => setFilters(prev => ({ ...prev, sizes: [] }));
+
+  // Apply client-side filters to products
+  const displayedProducts = products.filter((p) => {
+    // Search
+    const q = (search || "").trim().toLowerCase();
+    if (q) {
+      const name = (p.name || "").toString().toLowerCase();
+      const desc = (p.description || "").toString().toLowerCase();
+      const cat = (p.category || "").toString().toLowerCase();
+      if (!name.includes(q) && !desc.includes(q) && !cat.includes(q)) return false;
+    }
+
+    // Category
+    if (filters.category && String(p.category || "") !== String(filters.category)) {
+      return false;
+    }
+
+    // Price
+    const priceNum = (() => {
+      if (p.price == null || p.price === "") return NaN;
+      const n = Number(p.price);
+      return Number.isFinite(n) ? n : NaN;
+    })();
+
+    if (filters.priceMin !== "") {
+      const min = Number(filters.priceMin);
+      if (Number.isFinite(min) && (!Number.isFinite(priceNum) || priceNum < min)) return false;
+    }
+    if (filters.priceMax !== "") {
+      const max = Number(filters.priceMax);
+      if (Number.isFinite(max) && (!Number.isFinite(priceNum) || priceNum > max)) return false;
+    }
+
+    // Sizes — product must have at least one of selected sizes (AND logic could be changed)
+    if (filters.sizes && filters.sizes.length > 0) {
+      const pSizes = Array.isArray(p.sizes) ? p.sizes : (typeof p.sizes === "string" ? p.sizes.split(",").map(s => s.trim()) : []);
+      // keep product if any of filter sizes exist in product sizes
+      const intersection = pSizes.filter(s => filters.sizes.includes(s));
+      if (intersection.length === 0) return false;
+    }
+
+    return true;
+  });
+
   // open edit modal
   const openEdit = (product) => {
     setEditingProduct({
       ...product,
       colors: product.colors || [],
+      sizes: product.sizes || []
     });
     setSelectedFile(null);
     setPreviewSrc(product.image || null);
+    setSizeInput('');
     setIsEditing(true);
   };
 
@@ -99,16 +178,38 @@ const ClothingPage = () => {
     reader.readAsDataURL(f);
   };
 
-  // toggle color selection
+  // toggle color selection (modal)
   const toggleColor = (colorName) => {
     setEditingProduct(prev => {
       const colors = prev.colors || [];
       const hasColor = colors.includes(colorName);
-      const newColors = hasColor 
+      const newColors = hasColor
         ? colors.filter(c => c !== colorName)
         : [...colors, colorName];
       return { ...prev, colors: newColors };
     });
+  };
+
+  // toggle size selection (preset button in modal)
+  const toggleSize = (size) => {
+    setEditingProduct(prev => {
+      const sizes = prev.sizes || [];
+      const has = sizes.includes(size);
+      const newSizes = has ? sizes.filter(s => s !== size) : [...sizes, size];
+      return { ...prev, sizes: newSizes };
+    });
+  };
+
+  // add custom size from input (modal)
+  const addCustomSize = () => {
+    const s = (sizeInput || "").trim();
+    if (!s) return;
+    setEditingProduct(prev => {
+      const sizes = prev.sizes || [];
+      if (sizes.includes(s)) return prev;
+      return { ...prev, sizes: [...sizes, s] };
+    });
+    setSizeInput("");
   };
 
   // submit update
@@ -126,8 +227,8 @@ const ClothingPage = () => {
       fd.append("price", String(editingProduct.price ?? ""));
       fd.append("category", editingProduct.category || "");
       fd.append("description", editingProduct.description || "");
-      // send colors as comma-separated string
       fd.append("colors", (editingProduct.colors || []).join(","));
+      fd.append("sizes", (editingProduct.sizes || []).join(","));
 
       // file if selected
       if (selectedFile) fd.append("image", selectedFile);
@@ -141,7 +242,6 @@ const ClothingPage = () => {
         const text = await res.text();
         throw new Error(text || "Update failed");
       }
-
 
       // show success, then reload page after short delay so user sees updated listing
       Swal.fire({ icon: "success", title: "Saved", toast: true, position: "top-end", timer: 1200, showConfirmButton: false });
@@ -197,6 +297,8 @@ const ClothingPage = () => {
     return <div title={color} style={{ width: 14, height: 14, borderRadius: "50%", background: isGrad ? bg : bg, border: color === "white" ? "1px solid #ddd" : "none", marginRight: 8 }} />;
   };
 
+  const onClearSearch = () => setSearch("");
+
   return (
     <div style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", lineHeight: 1.6, color: "#333", backgroundColor: "#fafafa" }}>
       <Header />
@@ -207,26 +309,166 @@ const ClothingPage = () => {
               <span style={styles.filterTitle}>CATEGORIES</span>
               {expandedSections.categories ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </div>
-            {expandedSections.categories && <div style={styles.filterContent}>{categories.map((c, i) => <div key={i} className="filter-item" style={styles.filterItem}>{c}</div>)}</div>}
+
+            {expandedSections.categories && (
+              <div style={styles.filterContent}>
+                {categories.map((c, i) => {
+                  const active = filters.category === c;
+                  return (
+                    <div
+                      key={i}
+                      className="filter-item"
+                      onClick={() => toggleCategory(c)}
+                      style={{
+                        ...styles.filterItem,
+                        cursor: "pointer",
+                        color: active ? "#111827" : styles.filterItem.color,
+                        fontWeight: active ? 700 : 400,
+                        borderLeftColor: active ? "#5b5b5bff" : "transparent",
+                        background: active ? "#f0fdf4" : "transparent",
+                        paddingLeft: 12
+                      }}
+                    >
+                      {c}
+                    </div>
+                  );
+                })}
+
+                {/* Clear category */}
+                <div style={{ marginTop: 8 }}>
+                  <button
+                    onClick={() => setFilters(f => ({ ...f, category: "" }))}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 8,
+                      border: "1px solid #e2e8f0",
+                      background: "#fff",
+                      cursor: "pointer",
+                      fontSize: 13
+                    }}
+                  >
+                    Clear Category
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
-          {["designers", "priceRange", "sizes", "print", "materials"].map((k) => (
-            <div key={k} style={styles.filterSection}>
-              <div style={styles.filterHeader} onClick={() => toggleSection(k)}>
-                <span style={styles.filterTitle}>{k.toUpperCase().replace(/([A-Z])/g, " $1")}</span>
-                {expandedSections[k] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </div>
-              {expandedSections[k] && <div style={styles.filterContent}><div className="filter-item" style={styles.filterItem}>Coming Soon</div></div>}
+          <div style={styles.filterSection}>
+            <div style={styles.filterHeader} onClick={() => toggleSection("priceRange")}>
+              <span style={styles.filterTitle}>PRICE RANGE</span>
+              {expandedSections.priceRange ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </div>
-          ))}
+
+            {expandedSections.priceRange && (
+              <div style={styles.filterContent}>
+                <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={filters.priceMin}
+                    onChange={(e) => setPriceMin(e.target.value)}
+                    style={{ width: "50%", padding: 8, borderRadius: 8, border: "1px solid #e2e8f0" }}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={filters.priceMax}
+                    onChange={(e) => setPriceMax(e.target.value)}
+                    style={{ width: "50%", padding: 8, borderRadius: 8, border: "1px solid #e2e8f0" }}
+                  />
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    onClick={() => {
+                      setFilters(prev => ({ ...prev }));
+                    }}
+                    style={{ padding: "6px 10px", borderRadius: 8, border: "none", background: "#5b5b5bff", color: "#fff", cursor: "pointer" }}
+                  >
+                    Apply
+                  </button>
+                  <button
+                    onClick={resetPriceFilter}
+                    style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer" }}
+                  >
+                    Reset
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div style={styles.filterSection}>
+            <div style={styles.filterHeader} onClick={() => toggleSection("sizes")}>
+              <span style={styles.filterTitle}>SIZES</span>
+              {expandedSections.sizes ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </div>
+
+            {expandedSections.sizes && (
+              <div style={styles.filterContent}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                  {predefinedSizes.map(sz => {
+                    const selected = (filters.sizes || []).includes(sz);
+                    return (
+                      <button
+                        key={sz}
+                        type="button"
+                        onClick={() => toggleFilterSize(sz)}
+                        style={{
+                          padding: '6px 10px',
+                          borderRadius: 8,
+                          border: selected ? '2px solid #5b5b5bff' : '2px solid #e5e7eb',
+                          background: selected ? '#e6fffa' : '#fff',
+                          color: selected ? '#065f46' : '#374151',
+                          cursor: 'pointer',
+                          fontWeight: 700,
+                          fontSize: 13
+                        }}
+                      >
+                        {sz}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    onClick={clearSizesFilter}
+                    style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer" }}
+                  >
+                    Clear Sizes
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </aside>
 
         <main style={styles.mainContent}>
           <div style={styles.header}>
-            <h1 style={styles.title}>MEN'S LATEST CLOTHING</h1>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <h1 style={styles.title}>LATEST CLOTHING</h1>
+
+              {/* Search input added here */}
+              <div style={styles.searchContainer}>
+                <input
+                  type="search"
+                  placeholder="Search products by name, description or category..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={styles.searchInput}
+                />
+                {search && (
+                  <button onClick={onClearSearch} aria-label="Clear search" style={styles.searchClearBtn}>
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div style={styles.resultCount}>
-              <span>MEN'S FASHION</span>
-              <span>{products.length} RESULTS</span>
+              <span>FASHION</span>
+              <span>{displayedProducts.length} RESULTS</span>
             </div>
           </div>
 
@@ -234,10 +476,11 @@ const ClothingPage = () => {
           {error && <div style={{ color: "red" }}>{error}</div>}
 
           <div style={styles.productGrid}>
-            {products.length === 0 && !loading ? <div style={{ color: "#667788" }}>No products yet.</div> : null}
-            {products.map((product) => {
+            {displayedProducts.length === 0 && !loading ? <div style={{ color: "#667788" }}>No products match the selected filters.</div> : null}
+            {displayedProducts.map((product) => {
               const id = product._id || product.id;
               const colors = product.colors || [];
+              const sizes = product.sizes || []; // show sizes on card
               return (
                 <div key={id} className="product-card" style={styles.productCard}>
                   <div style={styles.productImageContainer}>
@@ -245,9 +488,22 @@ const ClothingPage = () => {
                   </div>
                   <div style={styles.productInfo}>
                     <h3 style={styles.productName}>{product.name ? product.name.toUpperCase() : "Unnamed Product"}</h3>
-                    <div style={styles.colorOptions}>
-                      {colors.length > 0 ? colors.map((c, i) => <ColorDot key={i} color={c} />) : <span style={{ fontSize: 12, color: "#9aa3ad" }}>No color info</span>}
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={styles.colorOptions}>
+                        {colors.length > 0 ? colors.map((c, i) => <ColorDot key={i} color={c} />) : <span style={{ fontSize: 12, color: "#9aa3ad" }}>No color info</span>}
+                      </div>
+
+                      {/* sizes display */}
+                      <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                        {sizes && sizes.length > 0 ? sizes.map((s, idx) => (
+                          <span key={idx} style={{ fontSize: 12, padding: "4px 8px", borderRadius: 6, border: "1px solid #e2e8f0", background: "#fff", color: "#4a5568", fontWeight: 600 }}>
+                            {s}
+                          </span>
+                        )) : <span style={{ fontSize: 12, color: "#9aa3ad" }}>No sizes</span>}
+                      </div>
                     </div>
+
                     <p style={styles.productPrice}>{product.price != null ? `LKR ${product.price}` : "Price N/A"}</p>
                     <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
                       <button onClick={() => openEdit(product)} style={styles.updateBtn}>Update</button>
@@ -267,49 +523,49 @@ const ClothingPage = () => {
           <div style={modalStyles.modal}>
             <div style={modalStyles.header}>
               <h2 style={modalStyles.title}>Edit Product</h2>
-              <button 
-                onClick={() => setIsEditing(false)} 
+              <button
+                onClick={() => setIsEditing(false)}
                 style={modalStyles.closeBtn}
                 disabled={submitting}
               >
                 <X size={20} />
               </button>
             </div>
-            
+
             <form onSubmit={submitUpdate} style={modalStyles.form}>
               <div style={modalStyles.formGrid}>
                 <div style={modalStyles.leftColumn}>
                   <div style={modalStyles.inputGroup}>
                     <label style={modalStyles.label}>Product Name *</label>
-                    <input 
-                      value={editingProduct.name || ""} 
-                      onChange={(e) => setEditField("name", e.target.value)} 
-                      required 
+                    <input
+                      value={editingProduct.name || ""}
+                      onChange={(e) => setEditField("name", e.target.value)}
+                      required
                       style={modalStyles.input}
                       placeholder="Enter product name"
                     />
                   </div>
 
                   <div style={modalStyles.inputRow}>
-                    <div style={{...modalStyles.inputGroup, flex: 1}}>
+                    <div style={{ ...modalStyles.inputGroup, flex: 1 }}>
                       <label style={modalStyles.label}>Price (LKR) *</label>
-                      <input 
-                        type="number" 
-                        value={editingProduct.price ?? ""} 
-                        onChange={(e) => setEditField("price", e.target.value)} 
-                        required 
+                      <input
+                        type="number"
+                        value={editingProduct.price ?? ""}
+                        onChange={(e) => setEditField("price", e.target.value)}
+                        required
                         style={modalStyles.input}
                         placeholder="0.00"
                         min="0"
                         step="0.01"
                       />
                     </div>
-                    
-                    <div style={{...modalStyles.inputGroup, flex: 1}}>
+
+                    <div style={{ ...modalStyles.inputGroup, flex: 1 }}>
                       <label style={modalStyles.label}>Category</label>
-                      <select 
-                        value={editingProduct.category || ""} 
-                        onChange={(e) => setEditField("category", e.target.value)} 
+                      <select
+                        value={editingProduct.category || ""}
+                        onChange={(e) => setEditField("category", e.target.value)}
                         style={modalStyles.select}
                       >
                         <option value="">Select category</option>
@@ -322,23 +578,83 @@ const ClothingPage = () => {
 
                   <div style={modalStyles.inputGroup}>
                     <label style={modalStyles.label}>Description</label>
-                    <textarea 
-                      value={editingProduct.description || ""} 
-                      onChange={(e) => setEditField("description", e.target.value)} 
-                      rows={4} 
+                    <textarea
+                      value={editingProduct.description || ""}
+                      onChange={(e) => setEditField("description", e.target.value)}
+                      rows={4}
                       style={modalStyles.textarea}
                       placeholder="Describe the product features, materials, fit, etc."
                     />
                   </div>
+
+                  {/* Sizes UI */}
+                  <div style={modalStyles.inputGroup}>
+                    <label style={modalStyles.label}>Available Sizes</label>
+
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        {predefinedSizes.map(sz => {
+                          const selected = (editingProduct.sizes || []).includes(sz);
+                          return (
+                            <button
+                              key={sz}
+                              type="button"
+                              onClick={() => toggleSize(sz)}
+                              disabled={selected}
+                              style={{
+                                padding: '6px 10px',
+                                borderRadius: 8,
+                                border: selected ? '2px solid #5b5b5bff' : '2px solid #e5e7eb',
+                                background: selected ? '#e6fffa' : '#fff',
+                                color: selected ? '#065f46' : '#374151',
+                                cursor: selected ? 'not-allowed' : 'pointer',
+                                fontWeight: 700,
+                                fontSize: 13
+                              }}
+                            >
+                              {sz}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                      <input
+                        type="text"
+                        placeholder="Custom size (e.g., S, XS)"
+                        value={sizeInput}
+                        onChange={(e) => setSizeInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomSize(); } }}
+                        style={{ padding: '10px', borderRadius: 8, border: '2px solid #e5e7eb', flex: 1 }}
+                      />
+                      <button type="button" onClick={addCustomSize} style={{ padding: '10px 14px', borderRadius: 8, border: 'none', background: '#5b5b5bff', color: '#fff', fontWeight: 700 }}>Add</button>
+                    </div>
+
+                    {/* selected sizes preview */}
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {(editingProduct.sizes || []).length > 0 ? (editingProduct.sizes || []).map((s, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 12, border: '1px solid #e2e8f0', background: '#fff' }}>
+                          <span style={{ fontWeight: 700 }}>{s}</span>
+                          <button type="button" onClick={() => {
+                            setEditingProduct(prev => ({ ...prev, sizes: (prev.sizes || []).filter(x => x !== s) }));
+                          }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#ef4444' }}>
+                            <X size={14} />
+                          </button>
+                        </div>
+                      )) : <div style={{ color: '#94a3b8' }}>No sizes selected</div>}
+                    </div>
+                  </div>
+                  {/* end sizes UI */}
 
                   <div style={modalStyles.inputGroup}>
                     <label style={modalStyles.label}>Available Colors</label>
                     <div style={modalStyles.colorGrid}>
                       {availableColors.map((color) => {
                         const isSelected = (editingProduct.colors || []).includes(color.name);
-                        
+
                         return (
-                          <div 
+                          <div
                             key={color.name}
                             onClick={() => toggleColor(color.name)}
                             style={{
@@ -346,7 +662,7 @@ const ClothingPage = () => {
                               ...(isSelected ? modalStyles.colorOptionSelected : {})
                             }}
                           >
-                            <div 
+                            <div
                               style={{
                                 ...modalStyles.colorSwatch,
                                 background: color.hex,
@@ -379,11 +695,11 @@ const ClothingPage = () => {
                           </div>
                         )}
                       </div>
-                      
+
                       <div style={modalStyles.uploadActions}>
-                        <input 
-                          type="file" 
-                          accept="image/*" 
+                        <input
+                          type="file"
+                          accept="image/*"
                           onChange={onFileChange}
                           style={{ display: 'none' }}
                           id="image-upload"
@@ -393,7 +709,7 @@ const ClothingPage = () => {
                           Choose Image
                         </label>
                         {previewSrc && (
-                          <button 
+                          <button
                             type="button"
                             onClick={() => {
                               setSelectedFile(null);
@@ -423,7 +739,7 @@ const ClothingPage = () => {
                           const colorData = availableColors.find(c => c.name === colorName);
                           return (
                             <span key={i} style={modalStyles.selectedColorTag}>
-                              <div 
+                              <div
                                 style={{
                                   ...modalStyles.selectedColorDot,
                                   background: colorData?.hex || '#ccc',
@@ -438,18 +754,34 @@ const ClothingPage = () => {
                     </>
                   )}
                 </div>
-                
+
+                {/* show selected sizes summary alongside colors */}
+                <div style={{ marginBottom: 12 }}>
+                  {editingProduct.sizes && editingProduct.sizes.length > 0 && (
+                    <>
+                      <span style={{ ...modalStyles.selectedLabel }}>Selected sizes:</span>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+                        {editingProduct.sizes.map((s, i) => (
+                          <div key={i} style={{ padding: '6px 10px', borderRadius: 12, border: '1px solid #e2e8f0', background: '#fff', fontWeight: 700 }}>
+                            {s}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+
                 <div style={modalStyles.actions}>
-                  <button 
-                    type="button" 
-                    onClick={() => setIsEditing(false)} 
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(false)}
                     style={modalStyles.cancelBtn}
                     disabled={submitting}
                   >
                     Cancel
                   </button>
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     style={{
                       ...modalStyles.saveBtn,
                       ...(submitting ? modalStyles.saveBtnDisabled : {})
@@ -464,6 +796,7 @@ const ClothingPage = () => {
           </div>
         </div>
       )}
+      <Footer />
 
       {/* inject hover styles */}
       <HoverStyles />
@@ -482,7 +815,7 @@ const HoverStyles = () => {
       .filter-item:hover{color:#4a5568 !important;border-left-color:#cbd5e0}
     `;
     document.head.appendChild(s);
-    return () => {};
+    return () => { };
   }, []);
   return null;
 };
@@ -511,26 +844,31 @@ const styles = {
   productPrice: { fontSize: 14, color: "#4a5568", margin: 0, fontWeight: 500 },
   updateBtn: { padding: "8px 12px", borderRadius: 6, border: "1px solid #2b6cb0", background: "#fff", color: "#2b6cb0", cursor: "pointer" },
   deleteBtn: { padding: "8px 12px", borderRadius: 6, border: "none", background: "#e53e3e", color: "#fff", cursor: "pointer" },
+
+  // search styles
+  searchContainer: { display: 'flex', alignItems: 'center', gap: 8, maxWidth: 540 },
+  searchInput: { padding: '10px 12px', borderRadius: 10, border: '2px solid #e5e7eb', width: '100%', fontSize: 14 },
+  searchClearBtn: { background: 'transparent', border: 'none', cursor: 'pointer', padding: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }
 };
 
 // Enhanced modal styles
 const modalStyles = {
-  overlay: { 
-    position: "fixed", 
-    inset: 0, 
-    background: "rgba(0,0,0,0.6)", 
-    display: "flex", 
-    alignItems: "center", 
-    justifyContent: "center", 
+  overlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.6)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     zIndex: 2000,
     backdropFilter: "blur(4px)"
   },
-  modal: { 
+  modal: {
     width: "90%",
-    maxWidth: 900, 
+    maxWidth: 900,
     maxHeight: "90vh",
-    background: "#fff", 
-    borderRadius: 16, 
+    background: "#fff",
+    borderRadius: 16,
     boxShadow: "0 25px 50px -12px rgba(0,0,0,0.4)",
     overflow: "hidden",
     display: "flex",
