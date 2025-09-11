@@ -21,14 +21,7 @@ export default function ProductManagement() {
   const [loading, setLoading] = useState(false);
 
   const categories = [
-    'Clothing',
-    'Accessories',
-    'Shoes',
-    'Electronics',
-    'Home & Garden',
-    'Sports & Outdoors',
-    'Beauty & Health',
-    'Books & Media'
+    "All","Mens", "Womans", "Kids", "Accessories"
   ];
 
   // Predefined color options for quick selection

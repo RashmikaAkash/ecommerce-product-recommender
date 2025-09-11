@@ -2,6 +2,13 @@
 import React, { useEffect, useState } from "react";
 import { Heart, Star } from "lucide-react";
 import Header from "../component/Header";
+import Men from "../assest/men.jpeg"
+import Kids from "../assest/kids.jpeg"
+import Assest from "../assest/assest.jpeg"
+import Woman from "../assest/woman.jpg"
+import Model from "../assest/model2.jpg"
+import Modelhero from "../assest/modelhero.jpeg"
+import Modelleft from "../assest/modelleft.jpeg"
 
 /**
  * Full fixed component — uses REACT_APP_API_URL (CRA) or same-origin fallback.
@@ -34,10 +41,10 @@ function getApiBase() {
 export default function FashionEcommerce() {
   const API_BASE = getApiBase();
 
-  const [activeTab, setActiveTab] = useState("Best Seller");
+  const [activeTab, setActiveTab] = useState("All");
   const [favorites, setFavorites] = useState(() => {
     try {
-      const raw = localStorage.getItem("favorites");
+      const raw = localStorage.getItem("favorite");
       if (!raw) return new Set();
       return new Set(JSON.parse(raw));
     } catch {
@@ -122,30 +129,30 @@ export default function FashionEcommerce() {
     {
       title: "Woman Collection",
       image:
-        "https://images.unsplash.com/photo-1494790108755-2616c88f3fd6?w=600&h=700&fit=crop&crop=face",
+        Woman,
       overlay: "dark",
     },
     {
       title: "Accessories Collection",
       image:
-        "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=300&h=350&fit=crop&crop=center",
+        Assest,
       overlay: "light",
     },
     {
       title: "Kids Collection",
       image:
-        "https://images.unsplash.com/photo-1503919005314-30d93d07d823?w=300&h=350&fit=crop&crop=center",
+        Kids,
       overlay: "dark",
     },
     {
       title: "Man Collection",
       image:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=700&fit=crop&crop=face",
+        Men,
       overlay: "dark",
     },
   ];
 
-  const tabs = ["Best Seller", "New Arrival", "Trending", "Hot Collection"];
+  const tabs = ["All","Mens", "Womans", "Kids", "Accessories"];
 
   return (
     <div
@@ -255,7 +262,7 @@ export default function FashionEcommerce() {
             }}
           >
             <img
-              src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=500&h=600&fit=crop&crop=face"
+              src= {Modelhero}
               alt="Model"
               style={{
                 width: "400px",
@@ -309,7 +316,7 @@ export default function FashionEcommerce() {
               key={collection.title}
               style={{
                 position: "relative",
-                gridColumn: index === 0 ? "span 2" : index === 3 ? "span 2" : "1",
+                gridColumn: index === 0 ? "span 2" : index === 2 ? "span 2" : "1",
                 gridRow: index === 0 ? "1 / 3" : index === 3 ? "1 / 3" : "1",
                 overflow: "hidden",
                 cursor: "pointer",
@@ -586,35 +593,7 @@ export default function FashionEcommerce() {
             })}
           </div>
         )}
-        <div style={{ textAlign: "center" }}>
-          <button
-            style={{
-              background: "white",
-              color: "#000",
-              border: "2px solid #000",
-              padding: "1rem 2rem",
-              cursor: "pointer",
-              fontSize: "1rem",
-              fontWeight: "500",
-              letterSpacing: "1px",
-              transition: "all 0.3s ease",
-              textTransform: "uppercase",
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = "#000";
-              e.target.style.color = "white";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = "white";
-              e.target.style.color = "#000";
-            }}
-            onClick={() => {
-              window.location.href = "/products";
-            }}
-          >
-            View All
-          </button>
-        </div>
+       
       </section>
 
       {/* Sale Banner */}
@@ -639,7 +618,7 @@ export default function FashionEcommerce() {
         >
           <div>
             <img
-              src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=500&fit=crop&crop=face"
+              src={Modelleft}
               alt="Sale Model Left"
               style={{
                 width: "100%",
@@ -718,7 +697,7 @@ export default function FashionEcommerce() {
 
           <div>
             <img
-              src="https://images.unsplash.com/photo-1506629905332-b2f0529a9eda?w=400&h=500&fit=crop&crop=face"
+              src={Model}
               alt="Sale Model Right"
               style={{
                 width: "100%",
