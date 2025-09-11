@@ -1,6 +1,7 @@
-// src/page/home.js  (or src/pages/FashionEcommerce.jsx)
+// src/page/home.js
 import React, { useEffect, useState } from "react";
-import { Heart, Star } from "lucide-react";
+import { Heart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Header from "../component/Header";
 import Footer from "../component/Footer";
 import Men from "../assest/men.jpeg";
@@ -11,10 +12,7 @@ import Model from "../assest/model2.jpg";
 import Modelhero from "../assest/modelhero.jpeg";
 import Modelleft from "../assest/modelleft.jpeg";
 
-/* Robust API base getter:
-   - Uses REACT_APP_API_URL if set (CRA)
-   - If running on localhost, points to http://localhost:5000 (dev convenience)
-   - Otherwise uses same-origin */
+/* Robust API base getter */
 function getApiBase() {
   try {
     if (typeof process !== "undefined" && process.env && process.env.REACT_APP_API_URL) {
@@ -23,7 +21,6 @@ function getApiBase() {
   } catch (e) {}
 
   if (typeof window !== "undefined" && window.location && window.location.hostname) {
-    // Dev convenience: if running frontend on localhost, assume backend on :5000
     if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
       return "http://localhost:5000";
     }
@@ -33,9 +30,9 @@ function getApiBase() {
   return "";
 }
 
-/* tolerant category matcher for the tabs */
+/* category matcher */
 function matchesTabCategory(tab, category) {
-  if (!tab || tab === "All") return true;   // ✅ only All shows everything
+  if (!tab || tab === "All") return true;
   if (!category) return false;
   const cat = String(category).toLowerCase().trim();
 
@@ -54,7 +51,7 @@ function matchesTabCategory(tab, category) {
   return false;
 }
 
-// format remaining ms -> {days,hours,minutes,seconds}
+// countdown helpers
 function calcRemaining(ms) {
   if (ms <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   const total = Math.floor(ms / 1000);
@@ -64,11 +61,8 @@ function calcRemaining(ms) {
   const seconds = total % 60;
   return { days, hours, minutes, seconds };
 }
-
-// A compact two-digit formatter
 const two = (n) => String(n).padStart(2, "0");
 
-// Stylish FlashCountdown component (self-contained, responsive, accessible)
 function FlashCountdown({ endISO, onExpired }) {
   const [remainingMs, setRemainingMs] = useState(() => {
     const end = Date.parse(endISO);
@@ -91,12 +85,8 @@ function FlashCountdown({ endISO, onExpired }) {
   }, [remainingMs, onExpired]);
 
   const parts = calcRemaining(remainingMs);
-
-  // percentage for progress bar (0-100)
   const end = Date.parse(endISO);
   const windowMs = (() => {
-    // attempt to infer a start: if env provided start, you can pass it; here we derive 9 days window if default
-    // keep at least 1 to avoid divide by zero
     const defaultWindow = 9 * 24 * 3600 * 1000;
     const start = isNaN(end) ? Date.now() - defaultWindow : end - defaultWindow;
     const total = Math.max(1, end - start);
@@ -104,7 +94,6 @@ function FlashCountdown({ endISO, onExpired }) {
     return Math.round((used / total) * 100);
   })();
 
-  // modern card layout
   return (
     <div className="flash-countdown" role="group" aria-label="Flash sale countdown">
       <div className="flash-header">
@@ -138,7 +127,7 @@ function FlashCountdown({ endISO, onExpired }) {
         <div className="progress-bar" style={{ width: `${windowMs}%` }} />
       </div>
 
-      <style jsx>{`
+      <style>{`
         .flash-countdown {
           display: flex;
           flex-direction: column;
@@ -152,7 +141,6 @@ function FlashCountdown({ endISO, onExpired }) {
           max-width: 520px;
           margin: 0 auto;
         }
-
         .flash-header { display:flex; align-items:center; gap:12px; }
         .flash-badge {
           background: linear-gradient(90deg,#ff7a7a,#ff4757);
@@ -163,47 +151,13 @@ function FlashCountdown({ endISO, onExpired }) {
           letter-spacing: 0.6px;
         }
         .flash-copy { font-size: 0.95rem; color: #e5e7eb; font-weight:600; }
-
-        .timer-row {
-          display:flex;
-          gap: 10px;
-          width:100%;
-          justify-content: center;
-          align-items: center;
-        }
-
-        .time-box {
-          min-width: 76px;
-          background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-          padding: 10px 8px;
-          border-radius: 10px;
-          text-align: center;
-          box-shadow: inset 0 -4px 10px rgba(0,0,0,0.25);
-          border: 1px solid rgba(255,255,255,0.04);
-        }
-
-        .time-value {
-          font-size: 1.4rem;
-          font-weight: 800;
-          letter-spacing: -1px;
-          color: #fff;
-          transition: transform 160ms ease;
-        }
-        .time-label {
-          font-size: 0.72rem;
-          color: #cbd5e1;
-          margin-top:6px;
-        }
-
-        .time-box:active .time-value { transform: scale(0.98); }
-
+        .timer-row { display:flex; gap: 10px; width:100%; justify-content:center; align-items:center; }
+        .time-box { min-width: 76px; background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); padding:10px 8px; border-radius:10px; text-align:center; box-shadow: inset 0 -4px 10px rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.04); }
+        .time-value { font-size:1.4rem; font-weight:800; letter-spacing:-1px; color:#fff; }
+        .time-label { font-size:0.72rem; color:#cbd5e1; margin-top:6px; }
         .progress-wrap { width:100%; background: rgba(255,255,255,0.04); height:8px; border-radius:999px; overflow:hidden; }
         .progress-bar { height:100%; background: linear-gradient(90deg,#ff7a7a,#ff4757); transition: width 1s linear; }
-
-        @media (max-width:640px){
-          .time-box { min-width:64px; padding:8px 6px; }
-          .time-value { font-size:1.1rem }
-        }
+        @media (max-width:640px){ .time-box { min-width:64px; } .time-value { font-size:1.1rem } }
       `}</style>
     </div>
   );
@@ -211,15 +165,14 @@ function FlashCountdown({ endISO, onExpired }) {
 
 export default function FashionEcommerce() {
   const API_BASE = getApiBase();
+  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("All");
-  // Favorites stored as Set of string ids
   const [favorites, setFavorites] = useState(() => {
     try {
-      const raw = localStorage.getItem("favorites"); // consistent key
+      const raw = localStorage.getItem("favorites");
       if (!raw) return new Set();
       const arr = JSON.parse(raw);
-      // ensure strings
       return new Set(Array.isArray(arr) ? arr.map((id) => String(id)) : []);
     } catch {
       return new Set();
@@ -230,14 +183,11 @@ export default function FashionEcommerce() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // --- Search states ---
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  // wishlist-only view toggle (works alongside tabs)
   const [showWishlistOnly, setShowWishlistOnly] = useState(false);
 
-  // recently viewed snapshots: {id, name, image, price}
   const [recentlyViewed, setRecentlyViewed] = useState(() => {
     try {
       const raw = localStorage.getItem("recentlyViewed");
@@ -249,7 +199,6 @@ export default function FashionEcommerce() {
     }
   });
 
-  // --- Flash sale end time (env override) ---
   const DEFAULT_SALE_END = (() => {
     const d = new Date();
     d.setDate(d.getDate() + 9);
@@ -264,10 +213,9 @@ export default function FashionEcommerce() {
     }
   } catch (e) {}
 
-  // fetch products and normalize IDs
+  // fetch products
   useEffect(() => {
     const controller = new AbortController();
-
     async function fetchProducts() {
       setLoading(true);
       setError(null);
@@ -284,7 +232,6 @@ export default function FashionEcommerce() {
         const data = await res.json();
         const normalized = Array.isArray(data)
           ? data.map((p, i) => {
-              // create a stable string id for every product
               const rawId = p._id || p.id || `${String(p.name || 'product')}-${i}`;
               return { ...p, id: String(rawId) };
             })
@@ -301,31 +248,23 @@ export default function FashionEcommerce() {
     return () => controller.abort();
   }, [API_BASE]);
 
-  // persist favorites (always as array of strings)
   useEffect(() => {
     try {
       localStorage.setItem("favorites", JSON.stringify(Array.from(favorites)));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [favorites]);
 
-  // persist recently viewed
   useEffect(() => {
     try {
       localStorage.setItem("recentlyViewed", JSON.stringify(recentlyViewed));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [recentlyViewed]);
 
-  // debounce searchTerm -> debouncedSearch
   useEffect(() => {
     const id = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300);
     return () => clearTimeout(id);
   }, [searchTerm]);
 
-  // toggle favorite by id (string)
   const toggleFavorite = (productId) => {
     setFavorites((prev) => {
       const next = new Set(prev);
@@ -336,7 +275,6 @@ export default function FashionEcommerce() {
     });
   };
 
-  // helper: is product favorited
   const isFavorited = (productId) => favorites.has(String(productId));
 
   const formatPrice = (value) => {
@@ -366,10 +304,8 @@ export default function FashionEcommerce() {
     { title: "Man Collection", image: Men, overlay: "dark" },
   ];
 
-  // include Wishlist as a pseudo-tab for UX
   const tabs = ["All", "Mens", "Womans", "Kids", "Accessories", "Wishlist"];
 
-  // search matching helper
   function matchesSearch(product, term) {
     if (!term) return true;
     const t = String(term).toLowerCase();
@@ -380,20 +316,15 @@ export default function FashionEcommerce() {
     return name.includes(t) || desc.includes(t) || cat.includes(t);
   }
 
-  // apply tab + search + wishlist filtering
   let filteredProducts = products
     .filter((p) => {
-      // handle Wishlist tab specially
       if (activeTab === 'Wishlist') return isFavorited(p.id);
-      // otherwise normal category matching
       return matchesTabCategory(activeTab, p.category);
     })
     .filter((p) => matchesSearch(p, debouncedSearch));
 
-  // if user toggled "show wishlist only" (button), filter again
   if (showWishlistOnly) filteredProducts = filteredProducts.filter((p) => isFavorited(p.id));
 
-  // add a product to recently viewed (store a small snapshot)
   const addRecentlyViewed = (product) => {
     if (!product || !product.id) return;
     const snap = {
@@ -405,16 +336,17 @@ export default function FashionEcommerce() {
 
     setRecentlyViewed((prev) => {
       const filtered = prev.filter((r) => r.id !== snap.id);
-      const next = [snap, ...filtered].slice(0, 8); // keep max 8
+      const next = [snap, ...filtered].slice(0, 8);
       return next;
     });
   };
 
-  // when clicking a product card or image, add to recently viewed (and optionally navigate)
+  // --- NAVIGATION: clicking a product opens Productcart (with id passed) ---
   const onProductClick = (product) => {
     addRecentlyViewed(product);
-    // example navigation (uncomment if you have product pages)
-    // window.location.href = `/product/${encodeURIComponent(product.id)}`;
+    const id = String(product.id);
+    // navigate to /productcart, pass id in state and query param (both)
+    navigate(`/productcart?id=${encodeURIComponent(id)}`, { state: { productId: id } });
   };
 
   return (
@@ -604,7 +536,6 @@ export default function FashionEcommerce() {
                 </button>
               )}
 
-              {/* Wishlist toggle button (shows only favorites and displays count) */}
               <button
                 onClick={() => setShowWishlistOnly((s) => !s)}
                 aria-pressed={showWishlistOnly}
@@ -624,7 +555,6 @@ export default function FashionEcommerce() {
             </div>
           </div>
 
-          {/* show quick result count */}
           <div style={{ color: "#666", fontSize: "0.95rem" }}>{loading ? "" : `${filteredProducts.length} products`}</div>
         </div>
 
@@ -637,12 +567,9 @@ export default function FashionEcommerce() {
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "2rem", marginBottom: "3rem" }}>
             {filteredProducts.slice(0, 8).map((product) => {
-              // use normalized product.id strictly
               const pid = String(product.id);
               const isFav = isFavorited(pid);
               const imgSrc = product.image ? product.image : fallbackImage;
-              const rating = product.rating ?? 4.6;
-              const reviews = product.reviews ?? Math.floor(Math.random() * 200 + 1);
 
               return (
                 <div
@@ -719,14 +646,6 @@ export default function FashionEcommerce() {
                   <div style={{ padding: "1.5rem" }}>
                     <h3 style={{ fontSize: "1.1rem", fontWeight: "500", marginBottom: "0.5rem", color: "#333" }}>{product.name ?? "Unnamed product"}</h3>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                        <Star size={14} fill="#ffd700" color="#ffd700" />
-                        <span style={{ fontSize: "0.9rem", color: "#666" }}>{rating}</span>
-                      </div>
-                      <span style={{ fontSize: "0.9rem", color: "#999" }}>({reviews} reviews)</span>
-                    </div>
-
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                       <span style={{ fontSize: "1.2rem", fontWeight: "600", color: "#000" }}>{formatPrice(product.price)}</span>
                       {product.originalPrice && (
@@ -741,17 +660,16 @@ export default function FashionEcommerce() {
         )}
       </section>
 
-      {/* Recently viewed section */}
+      {/* Recently viewed */}
       {recentlyViewed && recentlyViewed.length > 0 && (
         <section style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem" }}>
           <h3 style={{ fontSize: "1.25rem", fontWeight: "600", marginBottom: "1rem" }}>Recently viewed</h3>
           <div style={{ display: "flex", gap: "1rem", overflowX: "auto", paddingBottom: "0.5rem" }}>
             {recentlyViewed.map((rv) => (
               <div key={rv.id} style={{ minWidth: "180px", background: "white", borderRadius: "6px", overflow: "hidden", boxShadow: "0 6px 18px rgba(0,0,0,0.06)", cursor: "pointer" }} onClick={() => {
-                // if product still exists in products, open it; otherwise just add to recently viewed and do nothing
                 const p = products.find((x) => String(x.id) === rv.id);
                 if (p) onProductClick(p);
-                else addRecentlyViewed(rv);
+                else navigate(`/productcart?id=${encodeURIComponent(rv.id)}`, { state: { productId: String(rv.id) } });
               }}>
                 <img src={rv.image || fallbackImage} alt={rv.name || 'Viewed product'} style={{ width: "100%", height: "120px", objectFit: "cover" }} />
                 <div style={{ padding: "0.75rem" }}>
@@ -764,7 +682,7 @@ export default function FashionEcommerce() {
         </section>
       )}
 
-      {/* Sale Banner with stylish Flash Countdown component */}
+      {/* Sale Banner */}
       <section style={{ background: "linear-gradient(135deg, #f8f8f8 0%, #e0e0e0 100%)", padding: "4rem 2rem", textAlign: "center", position: "relative", overflow: "hidden" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 2fr 1fr", gap: "2rem", alignItems: "center" }}>
           <div>
@@ -772,7 +690,6 @@ export default function FashionEcommerce() {
           </div>
 
           <div style={{ padding: "2rem", display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {/* Insert the FlashCountdown component */}
             <FlashCountdown endISO={FLASH_SALE_END} onExpired={() => console.log('flash sale expired')} />
 
             <div style={{ fontSize: "0.9rem", color: "#666", marginTop: '1rem', letterSpacing: "2px", textTransform: "uppercase" }}>Deal of the Day</div>
@@ -797,7 +714,7 @@ export default function FashionEcommerce() {
                 e.target.style.background = "#000";
                 e.target.style.transform = "translateY(0)";
               }}
-              onClick={() => (window.location.href = '/sale')}
+              onClick={() => navigate('/sale')}
             >
               Shop Now
             </button>

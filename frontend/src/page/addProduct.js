@@ -11,12 +11,14 @@ export default function ProductManagement() {
     category: '',
     tags: [],
     colors: [],
+    sizes: [], // <-- added sizes array
     description: '',
     images: [] // we'll keep this for compatibility, but send single image as `image`
   });
 
   const [tagInput, setTagInput] = useState('');
   const [colorInput, setColorInput] = useState('');
+  const [sizeInput, setSizeInput] = useState(''); // <-- custom size input state
   const [colorPickerValue, setColorPickerValue] = useState('#000000');
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -40,6 +42,9 @@ export default function ProductManagement() {
     { name: 'Navy', value: '#1e40af' },
     { name: 'Brown', value: '#92400e' }
   ];
+
+  // Predefined size options (user requested M, L, Xl, XXl, XXXl)
+  const predefinedSizes = ['M', 'L', 'XL', 'XXL', 'XXXL'];
 
   useEffect(() => {
     // load draft if exists
@@ -134,6 +139,37 @@ export default function ProductManagement() {
     }));
   };
 
+  // --- Sizes handlers (new) ---
+  const addSize = (size) => {
+    if (!size) return;
+    const s = size.trim();
+    if (!s) return;
+    // normalize to same case for duplicates but preserve user's input display
+    if (!formData.sizes.includes(s)) {
+      setFormData(prev => ({
+        ...prev,
+        sizes: [...prev.sizes, s]
+      }));
+    }
+    setSizeInput('');
+  };
+
+  const removeSize = (sizeToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      sizes: prev.sizes.filter(s => s !== sizeToRemove)
+    }));
+  };
+
+  // handle custom size input "Enter"
+  const onSizeInputKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addSize(sizeInput);
+    }
+  };
+  // --- end sizes handlers ---
+
   const handleImageUpload = (e) => {
     const file = e.target.files && e.target.files[0];
     if (file) {
@@ -193,6 +229,7 @@ export default function ProductManagement() {
       category: formData.category,
       tags: formData.tags,
       colors: formData.colors,
+      sizes: formData.sizes, // <-- include sizes in payload
       description: formData.description.trim(),
       image: imagePreview || (formData.images && formData.images[0]) || ''
     };
@@ -220,12 +257,14 @@ export default function ProductManagement() {
         category: '',
         tags: [],
         colors: [],
+        sizes: [], // <-- reset sizes
         description: '',
         images: []
       });
       setImagePreview(null);
       setColorInput('');
       setColorPickerValue('#000000');
+      setSizeInput('');
       localStorage.removeItem('productDraft');
 
       alert('Product added successfully!');
@@ -572,8 +611,177 @@ export default function ProductManagement() {
                   ))}
                 </div>
 
-                {/* Enhanced Colors UI */}
+                {/* Sizes UI (NEW) */}
                 <div style={{ marginTop: '0.5rem' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <label style={{
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151'
+                    }}>
+                      Sizes
+                    </label>
+                  </div>
+
+                  <div style={{
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '0.75rem',
+                    padding: '1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <div style={{
+                      fontSize: '0.75rem',
+                      fontWeight: '500',
+                      color: '#475569',
+                      marginBottom: '0.75rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.025em'
+                    }}>
+                      Quick Sizes
+                    </div>
+
+                    <div style={{
+                      display: 'flex',
+                      gap: '0.5rem',
+                      flexWrap: 'wrap'
+                    }}>
+                      {predefinedSizes.map(sz => {
+                        const selected = formData.sizes.includes(sz);
+                        return (
+                          <button
+                            key={sz}
+                            onClick={() => addSize(sz)}
+                            disabled={selected}
+                            style={{
+                              padding: '0.5rem 0.75rem',
+                              backgroundColor: selected ? '#10b981' : 'white',
+                              color: selected ? 'white' : '#374151',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '0.5rem',
+                              cursor: selected ? 'not-allowed' : 'pointer',
+                              opacity: selected ? 0.9 : 1,
+                              fontSize: '0.875rem',
+                              fontWeight: 600
+                            }}
+                          >
+                            {sz}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div style={{
+                    backgroundColor: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '0.75rem',
+                    padding: '1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <div style={{
+                      fontSize: '0.75rem',
+                      fontWeight: '500',
+                      color: '#475569',
+                      marginBottom: '0.75rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.025em'
+                    }}>
+                      Custom Size
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input
+                        type="text"
+                        value={sizeInput}
+                        onChange={(e) => setSizeInput(e.target.value)}
+                        onKeyDown={onSizeInputKeyDown}
+                        placeholder="Enter custom size (e.g., S, XS, Custom)"
+                        style={{
+                          flex: 1,
+                          padding: '0.75rem',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '0.5rem',
+                          fontSize: '0.875rem',
+                          transition: 'border-color 0.2s ease'
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = '#10b981'}
+                        onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                      />
+                      <button
+                        onClick={() => addSize(sizeInput)}
+                        style={{
+                          padding: '0.75rem',
+                          backgroundColor: '#10b981',
+                          border: 'none',
+                          borderRadius: '0.5rem',
+                          color: 'white',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s ease'
+                        }}
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Selected Sizes Display */}
+                  {formData.sizes.length > 0 && (
+                    <div>
+                      <div style={{
+                        fontSize: '0.75rem',
+                        fontWeight: '500',
+                        color: '#475569',
+                        marginBottom: '0.75rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.025em'
+                      }}>
+                        Selected Sizes ({formData.sizes.length})
+                      </div>
+
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        {formData.sizes.map((s, idx) => (
+                          <span
+                            key={idx}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              backgroundColor: 'white',
+                              padding: '0.5rem 0.75rem',
+                              borderRadius: '0.5rem',
+                              fontSize: '0.75rem',
+                              fontWeight: '500',
+                              border: '1px solid #e5e7eb',
+                              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                            }}
+                          >
+                            <span style={{ color: '#374151' }}>{s}</span>
+                            <X
+                              size={14}
+                              style={{
+                                cursor: 'pointer',
+                                color: '#9ca3af',
+                                marginLeft: '0.25rem'
+                              }}
+                              onClick={() => removeSize(s)}
+                              onMouseOver={(e) => e.target.style.color = '#ef4444'}
+                              onMouseOut={(e) => e.target.style.color = '#9ca3af'}
+                            />
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {/* end Sizes */}
+                
+                {/* Enhanced Colors UI */}
+                <div style={{ marginTop: '1.25rem' }}>
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
