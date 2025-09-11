@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { ChevronDown, ChevronUp, X, Upload, Check } from "lucide-react";
 import Header from "../component/Header";
+import Footer from "../component/Footer";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
 
@@ -10,11 +11,8 @@ const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 const ClothingPage = () => {
   const [expandedSections, setExpandedSections] = useState({
     categories: true,
-    designers: false,
     priceRange: false,
     sizes: false,
-    print: false,
-    materials: false,
   });
 
   const toggleSection = (sectionKey) =>
@@ -31,7 +29,7 @@ const ClothingPage = () => {
   const [previewSrc, setPreviewSrc] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const categories = ["Shirts", "T-Shirts", "Pants", "Suits", "Jackets", "Accessories"];
+  const categories = ["Mens", "Womans", "Kids", "Accessories"];
   
   // Available colors with better visual representation
   const availableColors = [
@@ -210,7 +208,7 @@ const ClothingPage = () => {
             {expandedSections.categories && <div style={styles.filterContent}>{categories.map((c, i) => <div key={i} className="filter-item" style={styles.filterItem}>{c}</div>)}</div>}
           </div>
 
-          {["designers", "priceRange", "sizes", "print", "materials"].map((k) => (
+          {[ "priceRange", "sizes"].map((k) => (
             <div key={k} style={styles.filterSection}>
               <div style={styles.filterHeader} onClick={() => toggleSection(k)}>
                 <span style={styles.filterTitle}>{k.toUpperCase().replace(/([A-Z])/g, " $1")}</span>
@@ -464,6 +462,7 @@ const ClothingPage = () => {
           </div>
         </div>
       )}
+      <Footer />
 
       {/* inject hover styles */}
       <HoverStyles />

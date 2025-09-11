@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, X, Upload, Package, Save, Check, Palette } from 'lucide-react';
 import Header from '../component/Header';
+import Footer from "../component/Footer";
 
 export default function ProductManagement() {
   const [formData, setFormData] = useState({
@@ -21,7 +22,7 @@ export default function ProductManagement() {
   const [loading, setLoading] = useState(false);
 
   const categories = [
-    "All","Mens", "Womans", "Kids", "Accessories"
+    "Mens", "Womans", "Kids", "Accessories"
   ];
 
   // Predefined color options for quick selection
@@ -1006,6 +1007,7 @@ export default function ProductManagement() {
           </div>
         </div>
       </div>
+      <Footer/>
     </div>
   );
 }

@@ -1,5 +1,20 @@
+/* Reset browser defaults */
+html, body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  height: 100%; /* ensure full height */
+  background-color: #282c34; /* match your header background */
+}
+
+/* Apply box-sizing to everything */
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
 .App {
   text-align: center;
+  min-height: 100vh; /* make sure it covers viewport */
 }
 
 .App-logo {
