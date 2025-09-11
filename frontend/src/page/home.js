@@ -304,7 +304,7 @@ export default function FashionEcommerce() {
     { title: "Man Collection", image: Men, overlay: "dark" },
   ];
 
-  const tabs = ["All", "Mens", "Womans", "Kids", "Accessories", "Wishlist"];
+  const tabs = ["All", "Mens", "Womans", "Kids", "Accessories"];
 
   function matchesSearch(product, term) {
     if (!term) return true;

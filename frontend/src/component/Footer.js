@@ -8,7 +8,6 @@ const Footer = () => {
     e.preventDefault();
     if (email) {
       console.log('Subscribing email:', email);
-      // Add your subscription logic here
       setEmail('');
       alert('Thank you for subscribing!');
     }
@@ -263,7 +262,7 @@ const Footer = () => {
       left: '20px',
       width: '80px',
       height: '120px',
-      background: 'linear-gradient(45deg, #10b981, #065f46)',
+      background: 'linear-gradient(45deg, #5b5b5bff, #065f46)',
       borderRadius: '50px 10px',
       transform: 'rotate(-15deg)',
       opacity: '0.3'
@@ -274,7 +273,7 @@ const Footer = () => {
       right: '300px',
       width: '60px',
       height: '90px',
-      background: 'linear-gradient(45deg, #10b981, #065f46)',
+      background: 'linear-gradient(45deg, #5b5b5bff, #065f46)',
       borderRadius: '40px 8px',
       transform: 'rotate(25deg)',
       opacity: '0.2'
@@ -331,22 +330,21 @@ const Footer = () => {
 
       <div style={footerStyles.container}>
         <div style={isMobile ? footerStyles.mobileMainContent : footerStyles.mainContent}>
-          {/* Brand Section */}
-          <div style={footerStyles.brandSection}>
-            <div style={footerStyles.logo}>
-              <div style={footerStyles.logoIcon}>OS</div>
-              OFFICESPACE
-            </div>
-            <p style={footerStyles.description}>
-              Revolutionize your workspace with our cutting-edge office solutions. Elevate productivity and inspire innovation.
-            </p>
-          </div>
+          {/* Logo */}
+        <div style={{
+          fontSize: '1.5rem',
+          fontWeight: '700',
+          letterSpacing: '2px',
+          color: '#ffffffff'
+        }}>
+          OLIVIA GREY.
+        </div>
 
           {/* Resources Column */}
           <div style={footerStyles.column}>
             <h3 style={footerStyles.columnTitle}>Resources</h3>
             <ul style={footerStyles.linkList}>
-              {['Why OfficeSpace?', 'Customer Stories', 'Blog', 'Help Center', 'Webinars', 'Workplace Management', 'Glossary'].map((item, index) => (
+              {['Why OfficeSpace?', 'Customer Stories', 'Blog', 'Help Center', 'Webinars'].map((item, index) => (
                 <li key={index} style={footerStyles.linkItem}>
                   <a 
                     href=" " 
@@ -423,7 +421,7 @@ const Footer = () => {
         {/* Bottom Section */}
         <div style={isMobile ? footerStyles.mobileBottomSection : footerStyles.bottomSection}>
           <div style={footerStyles.copyright}>
-            © 2024 OfficeSpace Software Inc. All rights reserved.
+            © 2024 Dineth Rashmika Akash. All rights reserved.
           </div>
           
           <div style={footerStyles.socialLinks}>

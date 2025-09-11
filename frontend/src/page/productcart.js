@@ -1,6 +1,6 @@
 // src/page/productcart.js
 import React, { useEffect, useState, useRef } from "react";
-import { ShoppingCart, ArrowRight } from "lucide-react";
+import { ShoppingCart} from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../component/Header";
 import Footer from "../component/Footer";
@@ -179,7 +179,7 @@ export default function ProductCartPage() {
               <button onClick={addToCart} style={{ padding: "14px 20px", borderRadius: 10, background: "#111827", color: "#fff", border: "none", fontWeight: 800, cursor: "pointer" }}>
                 <ShoppingCart size={16} /> Add to cart
               </button>
-              {cartCount > 0 && <div style={{ marginTop: 12, color: "#10b981" }}>{cartCount} item{cartCount > 1 ? "s" : ""} added</div>}
+              {cartCount > 0 && <div style={{ marginTop: 12, color: "#5b5b5bff" }}>{cartCount} item{cartCount > 1 ? "s" : ""} added</div>}
             </div>
           </div>
         </div>

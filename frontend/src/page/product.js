@@ -326,7 +326,7 @@ const ClothingPage = () => {
                         cursor: "pointer",
                         color: active ? "#111827" : styles.filterItem.color,
                         fontWeight: active ? 700 : 400,
-                        borderLeftColor: active ? "#10b981" : "transparent",
+                        borderLeftColor: active ? "#5b5b5bff" : "transparent",
                         background: active ? "#f0fdf4" : "transparent",
                         paddingLeft: 12
                       }}
@@ -386,7 +386,7 @@ const ClothingPage = () => {
                       // no-op for apply because filters update live, but keep for UX parity
                       setFilters(prev => ({ ...prev }));
                     }}
-                    style={{ padding: "6px 10px", borderRadius: 8, border: "none", background: "#10b981", color: "#fff", cursor: "pointer" }}
+                    style={{ padding: "6px 10px", borderRadius: 8, border: "none", background: "#5b5b5bff", color: "#fff", cursor: "pointer" }}
                   >
                     Apply
                   </button>
@@ -420,7 +420,7 @@ const ClothingPage = () => {
                         style={{
                           padding: '6px 10px',
                           borderRadius: 8,
-                          border: selected ? '2px solid #10b981' : '2px solid #e5e7eb',
+                          border: selected ? '2px solid #5b5b5bff' : '2px solid #e5e7eb',
                           background: selected ? '#e6fffa' : '#fff',
                           color: selected ? '#065f46' : '#374151',
                           cursor: 'pointer',
@@ -607,7 +607,7 @@ const ClothingPage = () => {
                               style={{
                                 padding: '6px 10px',
                                 borderRadius: 8,
-                                border: selected ? '2px solid #10b981' : '2px solid #e5e7eb',
+                                border: selected ? '2px solid #5b5b5bff' : '2px solid #e5e7eb',
                                 background: selected ? '#e6fffa' : '#fff',
                                 color: selected ? '#065f46' : '#374151',
                                 cursor: selected ? 'not-allowed' : 'pointer',
@@ -631,7 +631,7 @@ const ClothingPage = () => {
                         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomSize(); } }}
                         style={{ padding: '10px', borderRadius: 8, border: '2px solid #e5e7eb', flex: 1 }}
                       />
-                      <button type="button" onClick={addCustomSize} style={{ padding: '10px 14px', borderRadius: 8, border: 'none', background: '#10b981', color: '#fff', fontWeight: 700 }}>Add</button>
+                      <button type="button" onClick={addCustomSize} style={{ padding: '10px 14px', borderRadius: 8, border: 'none', background: '#5b5b5bff', color: '#fff', fontWeight: 700 }}>Add</button>
                     </div>
 
                     {/* selected sizes preview */}
