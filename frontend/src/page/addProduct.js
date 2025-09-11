@@ -1,5 +1,6 @@
+// src/pages/ProductManagement.jsx
 import React, { useState, useEffect } from 'react';
-import { Plus, X, Upload, Package, Save, Check } from 'lucide-react';
+import { Plus, X, Upload, Package, Save, Check, Palette } from 'lucide-react';
 import Header from '../component/Header';
 
 export default function ProductManagement() {
@@ -8,11 +9,14 @@ export default function ProductManagement() {
     price: '',
     category: '',
     tags: [],
+    colors: [],
     description: '',
     images: [] // we'll keep this for compatibility, but send single image as `image`
   });
 
   const [tagInput, setTagInput] = useState('');
+  const [colorInput, setColorInput] = useState('');
+  const [colorPickerValue, setColorPickerValue] = useState('#000000');
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -25,6 +29,22 @@ export default function ProductManagement() {
     'Sports & Outdoors',
     'Beauty & Health',
     'Books & Media'
+  ];
+
+  // Predefined color options for quick selection
+  const popularColors = [
+    { name: 'Red', value: '#ef4444' },
+    { name: 'Blue', value: '#3b82f6' },
+    { name: 'Green', value: '#10b981' },
+    { name: 'Yellow', value: '#f59e0b' },
+    { name: 'Purple', value: '#8b5cf6' },
+    { name: 'Pink', value: '#ec4899' },
+    { name: 'Orange', value: '#f97316' },
+    { name: 'Gray', value: '#6b7280' },
+    { name: 'Black', value: '#000000' },
+    { name: 'White', value: '#ffffff' },
+    { name: 'Navy', value: '#1e40af' },
+    { name: 'Brown', value: '#92400e' }
   ];
 
   useEffect(() => {
@@ -41,7 +61,22 @@ export default function ProductManagement() {
     }
   }, []);
 
+  // Helper: clean price input string but keep as string for editing
+  const cleanPriceInput = (value) => {
+    if (value == null) return '';
+    let cleaned = String(value).replace(/[^0-9.-]/g, "");
+    const parts = cleaned.split(".");
+    if (parts.length > 2) cleaned = parts[0] + "." + parts.slice(1).join("");
+    return cleaned;
+  };
+
   const handleInputChange = (field, value) => {
+    if (field === "price") {
+      const cleaned = cleanPriceInput(value);
+      setFormData(prev => ({ ...prev, price: cleaned }));
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -64,6 +99,44 @@ export default function ProductManagement() {
     setFormData(prev => ({
       ...prev,
       tags: prev.tags.filter(tag => tag !== tagToRemove)
+    }));
+  };
+
+  // Enhanced color handlers
+  const addColor = () => {
+    const color = colorInput.trim();
+    if (!color) return;
+    if (!formData.colors.includes(color)) {
+      setFormData(prev => ({
+        ...prev,
+        colors: [...prev.colors, color]
+      }));
+    }
+    setColorInput('');
+  };
+
+  const addColorFromPicker = () => {
+    if (!formData.colors.includes(colorPickerValue)) {
+      setFormData(prev => ({
+        ...prev,
+        colors: [...prev.colors, colorPickerValue]
+      }));
+    }
+  };
+
+  const addPopularColor = (colorName, colorValue) => {
+    if (!formData.colors.includes(colorValue) && !formData.colors.includes(colorName)) {
+      setFormData(prev => ({
+        ...prev,
+        colors: [...prev.colors, colorName]
+      }));
+    }
+  };
+
+  const removeColor = (colorToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      colors: prev.colors.filter(c => c !== colorToRemove)
     }));
   };
 
@@ -95,10 +168,20 @@ export default function ProductManagement() {
 
   const validateForm = () => {
     if (!formData.name.trim()) return 'Product name is required.';
-    if (!formData.price.toString().trim()) return 'Price is required.';
-    if (isNaN(Number(formData.price))) return 'Price must be a number.';
+    if (!String(formData.price).trim()) return 'Price is required.';
+    const p = Number(String(formData.price).trim());
+    if (!Number.isFinite(p)) return 'Price must be a number.';
     if (!formData.category) return 'Category is required.';
     return null;
+  };
+
+  // Helper: parse numeric price and round to 2 decimals
+  const normalizePriceForSend = (raw) => {
+    if (raw == null) return 0;
+    const cleaned = cleanPriceInput(raw);
+    const num = Number(cleaned);
+    if (!Number.isFinite(num)) return 0;
+    return Math.round(num * 100) / 100;
   };
 
   const handleAddProduct = async () => {
@@ -112,9 +195,10 @@ export default function ProductManagement() {
 
     const payload = {
       name: formData.name.trim(),
-      price: Number(formData.price), // ensure numeric
+      price: normalizePriceForSend(formData.price),
       category: formData.category,
       tags: formData.tags,
+      colors: formData.colors,
       description: formData.description.trim(),
       image: imagePreview || (formData.images && formData.images[0]) || ''
     };
@@ -141,10 +225,13 @@ export default function ProductManagement() {
         price: '',
         category: '',
         tags: [],
+        colors: [],
         description: '',
         images: []
       });
       setImagePreview(null);
+      setColorInput('');
+      setColorPickerValue('#000000');
       localStorage.removeItem('productDraft');
 
       alert('Product added successfully!');
@@ -155,6 +242,22 @@ export default function ProductManagement() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to get color display properties
+  const getColorDisplay = (colorValue) => {
+    if (colorValue.startsWith('#')) {
+      return { backgroundColor: colorValue, border: '1px solid #d1d5db' };
+    }
+    // For named colors, try to find matching popular color
+    const popularColor = popularColors.find(pc => 
+      pc.name.toLowerCase() === colorValue.toLowerCase()
+    );
+    if (popularColor) {
+      return { backgroundColor: popularColor.value, border: '1px solid #d1d5db' };
+    }
+    // Fallback for CSS color names or unknown colors
+    return { backgroundColor: colorValue, border: '1px solid #d1d5db' };
   };
 
   return (
@@ -366,7 +469,7 @@ export default function ProductManagement() {
                       $
                     </span>
                     <input
-                      type="number"
+                      type="text"
                       value={formData.price}
                       onChange={(e) => handleInputChange('price', e.target.value)}
                       placeholder="0.00"
@@ -447,7 +550,8 @@ export default function ProductManagement() {
                 <div style={{
                   display: 'flex',
                   flexWrap: 'wrap',
-                  gap: '0.5rem'
+                  gap: '0.5rem',
+                  marginBottom: '1rem'
                 }}>
                   {formData.tags.map((tag, index) => (
                     <span
@@ -473,6 +577,285 @@ export default function ProductManagement() {
                     </span>
                   ))}
                 </div>
+
+                {/* Enhanced Colors UI */}
+                <div style={{ marginTop: '0.5rem' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <Palette size={20} style={{ color: '#6b7280' }} />
+                    <label style={{
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151'
+                    }}>
+                      Product Colors
+                    </label>
+                  </div>
+
+                  {/* Color Picker Section */}
+                  <div style={{
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '0.75rem',
+                    padding: '1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <div style={{
+                      fontSize: '0.75rem',
+                      fontWeight: '500',
+                      color: '#475569',
+                      marginBottom: '0.75rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.025em'
+                    }}>
+                      Color Picker
+                    </div>
+                    
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      marginBottom: '0.75rem'
+                    }}>
+                      <input
+                        type="color"
+                        value={colorPickerValue}
+                        onChange={(e) => setColorPickerValue(e.target.value)}
+                        style={{
+                          width: '50px',
+                          height: '40px',
+                          border: '2px solid #e2e8f0',
+                          borderRadius: '0.5rem',
+                          cursor: 'pointer'
+                        }}
+                      />
+                      <div style={{
+                        flex: 1,
+                        fontSize: '0.875rem',
+                        color: '#64748b',
+                        fontFamily: 'monospace',
+                        backgroundColor: 'white',
+                        padding: '0.5rem 0.75rem',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '0.375rem'
+                      }}>
+                        {colorPickerValue}
+                      </div>
+                      <button
+                        onClick={addColorFromPicker}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          backgroundColor: '#5b5b5bff',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '0.375rem',
+                          fontSize: '0.75rem',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s ease'
+                        }}
+                        onMouseOver={(e) => e.target.style.backgroundColor = '#6a6a6aff'}
+                        onMouseOut={(e) => e.target.style.backgroundColor = '#5b5b5bff'}
+                      >
+                        Add Color
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Popular Colors Section */}
+                  <div style={{
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '0.75rem',
+                    padding: '1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <div style={{
+                      fontSize: '0.75rem',
+                      fontWeight: '500',
+                      color: '#475569',
+                      marginBottom: '0.75rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.025em'
+                    }}>
+                      Popular Colors
+                    </div>
+                    
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
+                      gap: '0.5rem'
+                    }}>
+                      {popularColors.map((color) => (
+                        <button
+                          key={color.name}
+                          onClick={() => addPopularColor(color.name, color.value)}
+                          disabled={formData.colors.includes(color.name) || formData.colors.includes(color.value)}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            padding: '0.5rem',
+                            backgroundColor: 'white',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '0.5rem',
+                            cursor: formData.colors.includes(color.name) || formData.colors.includes(color.value) ? 'not-allowed' : 'pointer',
+                            opacity: formData.colors.includes(color.name) || formData.colors.includes(color.value) ? 0.5 : 1,
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseOver={(e) => {
+                            if (!e.target.disabled) {
+                              e.target.style.borderColor = '#10b981';
+                              e.target.style.transform = 'translateY(-1px)';
+                            }
+                          }}
+                          onMouseOut={(e) => {
+                            e.target.style.borderColor = '#e2e8f0';
+                            e.target.style.transform = 'translateY(0)';
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '24px',
+                              height: '24px',
+                              backgroundColor: color.value,
+                              border: color.value === '#ffffff' ? '1px solid #e2e8f0' : '1px solid rgba(0,0,0,0.1)',
+                              borderRadius: '50%'
+                            }}
+                          />
+                          <span style={{
+                            fontSize: '0.625rem',
+                            fontWeight: '500',
+                            color: '#64748b'
+                          }}>
+                            {color.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Custom Color Input */}
+                  <div style={{
+                    backgroundColor: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '0.75rem',
+                    padding: '1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <div style={{
+                      fontSize: '0.75rem',
+                      fontWeight: '500',
+                      color: '#475569',
+                      marginBottom: '0.75rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.025em'
+                    }}>
+                      Custom Color
+                    </div>
+                    
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input
+                        type="text"
+                        value={colorInput}
+                        onChange={(e) => setColorInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addColor();
+                          }
+                        }}
+                        placeholder="Enter color name or hex code (e.g., Burgundy, #800020)"
+                        style={{
+                          flex: 1,
+                          padding: '0.75rem',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '0.5rem',
+                          fontSize: '0.875rem',
+                          transition: 'border-color 0.2s ease'
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = '#10b981'}
+                        onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                      />
+                      <button
+                        onClick={addColor}
+                        style={{
+                          padding: '0.75rem',
+                          backgroundColor: '#10b981',
+                          border: 'none',
+                          borderRadius: '0.5rem',
+                          color: 'white',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s ease'
+                        }}
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Selected Colors Display */}
+                  {formData.colors.length > 0 && (
+                    <div>
+                      <div style={{
+                        fontSize: '0.75rem',
+                        fontWeight: '500',
+                        color: '#475569',
+                        marginBottom: '0.75rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.025em'
+                      }}>
+                        Selected Colors ({formData.colors.length})
+                      </div>
+                      
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        {formData.colors.map((c, idx) => (
+                          <span
+                            key={idx}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              backgroundColor: 'white',
+                              padding: '0.5rem 0.75rem',
+                              borderRadius: '0.5rem',
+                              fontSize: '0.75rem',
+                              fontWeight: '500',
+                              border: '1px solid #e5e7eb',
+                              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: '18px',
+                                height: '18px',
+                                borderRadius: '50%',
+                                flexShrink: 0,
+                                ...getColorDisplay(c)
+                              }}
+                            />
+                            <span style={{ color: '#374151' }}>{c}</span>
+                            <X
+                              size={14}
+                              style={{ 
+                                cursor: 'pointer',
+                                color: '#9ca3af',
+                                marginLeft: '0.25rem'
+                              }}
+                              onClick={() => removeColor(c)}
+                              onMouseOver={(e) => e.target.style.color = '#ef4444'}
+                              onMouseOut={(e) => e.target.style.color = '#9ca3af'}
+                            />
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {/* end Colors */}
               </div>
             </div>
 
