@@ -44,7 +44,7 @@ The project implements **Product Management (CRUD with image uploads)**, a **Rul
 
 ## 🏗️ Tech Stack
 
-- **Frontend**: React (Vite/CRA), Tailwind CSS, React Router, SweetAlert2  
+- **Frontend**: React, CSS, React Router, SweetAlert2  
 - **Backend**: Node.js, Express.js, Mongoose (MongoDB), Multer  
 - **Database**: MongoDB Atlas / Local MongoDB  
 - **Other Tools**: dotenv, cors, axios  
