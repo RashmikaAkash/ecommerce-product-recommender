@@ -504,7 +504,7 @@ const ClothingPage = () => {
                       </div>
                     </div>
 
-                    <p style={styles.productPrice}>{product.price != null ? `LKR ${product.price}` : "Price N/A"}</p>
+                    <p style={styles.productPrice}>{product.price != null ? `$ ${product.price}` : "Price N/A"}</p>
                     <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
                       <button onClick={() => openEdit(product)} style={styles.updateBtn}>Update</button>
                       <button onClick={() => removeProduct(id)} style={styles.deleteBtn}>Remove</button>
@@ -548,7 +548,7 @@ const ClothingPage = () => {
 
                   <div style={modalStyles.inputRow}>
                     <div style={{ ...modalStyles.inputGroup, flex: 1 }}>
-                      <label style={modalStyles.label}>Price (LKR) *</label>
+                      <label style={modalStyles.label}>Price ($) *</label>
                       <input
                         type="number"
                         value={editingProduct.price ?? ""}
