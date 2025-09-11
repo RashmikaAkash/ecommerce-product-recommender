@@ -290,10 +290,6 @@ export default function FashionEcommerce() {
     }
   };
 
-  const handleAddToCart = (product) => {
-    alert(`Add to cart: ${product.name || "Product"}`);
-  };
-
   const fallbackImage =
     "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=800&q=60&auto=format&fit=crop";
 
@@ -632,10 +628,7 @@ export default function FashionEcommerce() {
 
                     <div style={{ position: "absolute", bottom: "1rem", left: "1rem", right: "1rem", display: "flex", gap: "0.5rem", opacity: 0, transition: "opacity 0.3s ease" }} className="product-actions">
                       <button
-                        onClick={(ev) => {
-                          ev.stopPropagation();
-                          handleAddToCart(product);
-                        }}
+                        onClick={() => onProductClick(product)}
                         style={{ flex: 1, background: "#000", color: "white", border: "none", padding: "0.75rem", cursor: "pointer", fontSize: "0.9rem", fontWeight: "500" }}
                       >
                         Add to Cart

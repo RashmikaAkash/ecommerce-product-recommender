@@ -421,7 +421,7 @@ const Footer = () => {
         {/* Bottom Section */}
         <div style={isMobile ? footerStyles.mobileBottomSection : footerStyles.bottomSection}>
           <div style={footerStyles.copyright}>
-            © 2024 Dineth Rashmika Akash. All rights reserved.
+            © 2025 Dineth Rashmika Akash. All rights reserved.
           </div>
 
           <div style={footerStyles.socialLinks}>
