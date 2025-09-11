@@ -13,14 +13,14 @@ export default function ProductManagement() {
     category: '',
     tags: [],
     colors: [],
-    sizes: [], // <-- added sizes array
+    sizes: [],
     description: '',
-    images: [] // we'll keep this for compatibility, but send single image as `image`
+    images: []
   });
 
   const [tagInput, setTagInput] = useState('');
   const [colorInput, setColorInput] = useState('');
-  const [sizeInput, setSizeInput] = useState(''); // <-- custom size input state
+  const [sizeInput, setSizeInput] = useState('');
   const [colorPickerValue, setColorPickerValue] = useState('#000000');
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -317,7 +317,7 @@ export default function ProductManagement() {
       return { backgroundColor: colorValue, border: '1px solid #d1d5db' };
     }
     // For named colors, try to find matching popular color
-    const popularColor = popularColors.find(pc => 
+    const popularColor = popularColors.find(pc =>
       pc.name.toLowerCase() === colorValue.toLowerCase()
     );
     if (popularColor) {
@@ -813,7 +813,7 @@ export default function ProductManagement() {
                   )}
                 </div>
                 {/* end Sizes */}
-                
+
                 {/* Enhanced Colors UI */}
                 <div style={{ marginTop: '1.25rem' }}>
                   <div style={{
@@ -849,7 +849,7 @@ export default function ProductManagement() {
                     }}>
                       Color Picker
                     </div>
-                    
+
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -918,7 +918,7 @@ export default function ProductManagement() {
                     }}>
                       Popular Colors
                     </div>
-                    
+
                     <div style={{
                       display: 'grid',
                       gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
@@ -992,7 +992,7 @@ export default function ProductManagement() {
                     }}>
                       Custom Color
                     </div>
-                    
+
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <input
                         type="text"
@@ -1046,7 +1046,7 @@ export default function ProductManagement() {
                       }}>
                         Selected Colors ({formData.colors.length})
                       </div>
-                      
+
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                         {formData.colors.map((c, idx) => (
                           <span
@@ -1076,7 +1076,7 @@ export default function ProductManagement() {
                             <span style={{ color: '#374151' }}>{c}</span>
                             <X
                               size={14}
-                              style={{ 
+                              style={{
                                 cursor: 'pointer',
                                 color: '#9ca3af',
                                 marginLeft: '0.25rem'
@@ -1249,7 +1249,7 @@ export default function ProductManagement() {
           </div>
         </div>
       </div>
-      <Footer/>
+      <Footer />
     </div>
   );
 }

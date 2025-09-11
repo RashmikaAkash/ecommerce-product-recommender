@@ -1,4 +1,3 @@
-// backend/models/Product.js
 import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema(
@@ -7,10 +6,10 @@ const productSchema = new mongoose.Schema(
     price: { type: Number, required: true, min: 0 },
     category: { type: String, required: true, index: true },
     tags: { type: [String], index: true, default: [] },
-    colors: { type: [String], default: [] }, // used by frontend
-    sizes: { type: [String], default: [] }, // added sizes
+    colors: { type: [String], default: [] },
+    sizes: { type: [String], default: [] },
     description: { type: String, default: "" },
-    image: { type: String, default: "" } // URL to hosted image (recommended)
+    image: { type: String, default: "" }
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );

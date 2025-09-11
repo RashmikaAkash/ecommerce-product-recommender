@@ -331,14 +331,14 @@ const Footer = () => {
       <div style={footerStyles.container}>
         <div style={isMobile ? footerStyles.mobileMainContent : footerStyles.mainContent}>
           {/* Logo */}
-        <div style={{
-          fontSize: '1.5rem',
-          fontWeight: '700',
-          letterSpacing: '2px',
-          color: '#ffffffff'
-        }}>
-          OLIVIA GREY.
-        </div>
+          <div style={{
+            fontSize: '1.5rem',
+            fontWeight: '700',
+            letterSpacing: '2px',
+            color: '#ffffffff'
+          }}>
+            OLIVIA GREY.
+          </div>
 
           {/* Resources Column */}
           <div style={footerStyles.column}>
@@ -346,8 +346,8 @@ const Footer = () => {
             <ul style={footerStyles.linkList}>
               {['Why OfficeSpace?', 'Customer Stories', 'Blog', 'Help Center', 'Webinars'].map((item, index) => (
                 <li key={index} style={footerStyles.linkItem}>
-                  <a 
-                    href=" " 
+                  <a
+                    href=" "
                     style={{
                       ...footerStyles.link,
                       ...(hoveredLink === `resources-${index}` ? footerStyles.linkHover : {})
@@ -368,8 +368,8 @@ const Footer = () => {
             <ul style={footerStyles.linkList}>
               {['About Us', 'Careers', 'Leadership', 'News', 'Partners', 'Events', 'Contact Us'].map((item, index) => (
                 <li key={index} style={footerStyles.linkItem}>
-                  <a 
-                    href=" " 
+                  <a
+                    href=" "
                     style={{
                       ...footerStyles.link,
                       ...(hoveredLink === `company-${index}` ? footerStyles.linkHover : {})
@@ -389,7 +389,7 @@ const Footer = () => {
 
             <h2 style={footerStyles.demoTitle}>Request a</h2>
             <h2 style={footerStyles.demoSubtitle}>Demo</h2>
-            
+
             <div style={footerStyles.emailForm}>
               <input
                 type="email"
@@ -403,7 +403,7 @@ const Footer = () => {
                   }
                 }}
               />
-              <button 
+              <button
                 onClick={handleSubscribe}
                 style={{
                   ...footerStyles.submitButton,
@@ -423,7 +423,7 @@ const Footer = () => {
           <div style={footerStyles.copyright}>
             © 2024 Dineth Rashmika Akash. All rights reserved.
           </div>
-          
+
           <div style={footerStyles.socialLinks}>
             {[
               { Icon: Linkedin, name: 'linkedin' },

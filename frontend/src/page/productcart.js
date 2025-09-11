@@ -1,6 +1,6 @@
 // src/page/productcart.js
 import React, { useEffect, useState, useRef } from "react";
-import { ShoppingCart} from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../component/Header";
 import Footer from "../component/Footer";
@@ -10,7 +10,7 @@ function getApiBase() {
     if (typeof process !== "undefined" && process.env && process.env.REACT_APP_API_URL) {
       return String(process.env.REACT_APP_API_URL).replace(/\/$/, "");
     }
-  } catch (e) {}
+  } catch (e) { }
   if (typeof window !== "undefined" && window.location && window.location.hostname) {
     if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
       return "http://localhost:5000";

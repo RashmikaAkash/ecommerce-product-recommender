@@ -18,7 +18,7 @@ function getApiBase() {
     if (typeof process !== "undefined" && process.env && process.env.REACT_APP_API_URL) {
       return String(process.env.REACT_APP_API_URL).replace(/\/$/, "");
     }
-  } catch (e) {}
+  } catch (e) { }
 
   if (typeof window !== "undefined" && window.location && window.location.hostname) {
     if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
@@ -211,7 +211,7 @@ export default function FashionEcommerce() {
     if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_FLASH_SALE_END) {
       FLASH_SALE_END = process.env.REACT_APP_FLASH_SALE_END;
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // fetch products
   useEffect(() => {
@@ -232,9 +232,9 @@ export default function FashionEcommerce() {
         const data = await res.json();
         const normalized = Array.isArray(data)
           ? data.map((p, i) => {
-              const rawId = p._id || p.id || `${String(p.name || 'product')}-${i}`;
-              return { ...p, id: String(rawId) };
-            })
+            const rawId = p._id || p.id || `${String(p.name || 'product')}-${i}`;
+            return { ...p, id: String(rawId) };
+          })
           : [];
         setProducts(normalized);
       } catch (err) {
@@ -251,13 +251,13 @@ export default function FashionEcommerce() {
   useEffect(() => {
     try {
       localStorage.setItem("favorites", JSON.stringify(Array.from(favorites)));
-    } catch {}
+    } catch { }
   }, [favorites]);
 
   useEffect(() => {
     try {
       localStorage.setItem("recentlyViewed", JSON.stringify(recentlyViewed));
-    } catch {}
+    } catch { }
   }, [recentlyViewed]);
 
   useEffect(() => {
@@ -734,7 +734,7 @@ export default function FashionEcommerce() {
           opacity: 1 !important;
         }
       `}</style>
-      <Footer/>
+      <Footer />
     </div>
   );
 }

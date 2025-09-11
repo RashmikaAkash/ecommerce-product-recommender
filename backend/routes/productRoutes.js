@@ -36,7 +36,6 @@ function imageFileFilter(req, file, cb) {
 
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: imageFileFilter }); // 5MB max
 
-// Helper: clean and parse price from various inputs like "$100", "100,00", "100.00"
 function parseAndRoundPrice(raw) {
   if (raw == null) return null;
   const str = String(raw).trim();

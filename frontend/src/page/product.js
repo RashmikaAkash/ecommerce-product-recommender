@@ -24,10 +24,10 @@ const ClothingPage = () => {
 
   // filter state
   const [filters, setFilters] = useState({
-    category: "",      // selected category ("" = all)
-    priceMin: "",      // string to keep inputs friendly
+    category: "",
+    priceMin: "",
     priceMax: "",
-    sizes: []          // array of selected sizes for filtering
+    sizes: []
   });
 
   // search state
@@ -40,10 +40,10 @@ const ClothingPage = () => {
   const [previewSrc, setPreviewSrc] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const [sizeInput, setSizeInput] = useState(""); // <-- custom size input for modal
+  const [sizeInput, setSizeInput] = useState("");
 
   const categories = ["Mens", "Womans", "Kids", "Accessories"];
-  
+
   // Available colors with better visual representation
   const availableColors = [
     { name: "black", hex: "#000000", label: "Black" },
@@ -156,7 +156,7 @@ const ClothingPage = () => {
     setEditingProduct({
       ...product,
       colors: product.colors || [],
-      sizes: product.sizes || [] // ensure sizes exist
+      sizes: product.sizes || []
     });
     setSelectedFile(null);
     setPreviewSrc(product.image || null);
@@ -183,7 +183,7 @@ const ClothingPage = () => {
     setEditingProduct(prev => {
       const colors = prev.colors || [];
       const hasColor = colors.includes(colorName);
-      const newColors = hasColor 
+      const newColors = hasColor
         ? colors.filter(c => c !== colorName)
         : [...colors, colorName];
       return { ...prev, colors: newColors };
@@ -227,9 +227,7 @@ const ClothingPage = () => {
       fd.append("price", String(editingProduct.price ?? ""));
       fd.append("category", editingProduct.category || "");
       fd.append("description", editingProduct.description || "");
-      // send colors as comma-separated string
       fd.append("colors", (editingProduct.colors || []).join(","));
-      // send sizes as comma-separated string
       fd.append("sizes", (editingProduct.sizes || []).join(","));
 
       // file if selected
@@ -307,7 +305,7 @@ const ClothingPage = () => {
       <div style={styles.container}>
         <aside style={styles.sidebar}>
           <div style={styles.filterSection}>
-            <div style={styles.filterHeader} onClick={() => toggleSection("categories") }>
+            <div style={styles.filterHeader} onClick={() => toggleSection("categories")}>
               <span style={styles.filterTitle}>CATEGORIES</span>
               {expandedSections.categories ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </div>
@@ -357,7 +355,7 @@ const ClothingPage = () => {
           </div>
 
           <div style={styles.filterSection}>
-            <div style={styles.filterHeader} onClick={() => toggleSection("priceRange") }>
+            <div style={styles.filterHeader} onClick={() => toggleSection("priceRange")}>
               <span style={styles.filterTitle}>PRICE RANGE</span>
               {expandedSections.priceRange ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </div>
@@ -383,7 +381,6 @@ const ClothingPage = () => {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     onClick={() => {
-                      // no-op for apply because filters update live, but keep for UX parity
                       setFilters(prev => ({ ...prev }));
                     }}
                     style={{ padding: "6px 10px", borderRadius: 8, border: "none", background: "#5b5b5bff", color: "#fff", cursor: "pointer" }}
@@ -402,7 +399,7 @@ const ClothingPage = () => {
           </div>
 
           <div style={styles.filterSection}>
-            <div style={styles.filterHeader} onClick={() => toggleSection("sizes") }>
+            <div style={styles.filterHeader} onClick={() => toggleSection("sizes")}>
               <span style={styles.filterTitle}>SIZES</span>
               {expandedSections.sizes ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </div>
@@ -526,49 +523,49 @@ const ClothingPage = () => {
           <div style={modalStyles.modal}>
             <div style={modalStyles.header}>
               <h2 style={modalStyles.title}>Edit Product</h2>
-              <button 
-                onClick={() => setIsEditing(false)} 
+              <button
+                onClick={() => setIsEditing(false)}
                 style={modalStyles.closeBtn}
                 disabled={submitting}
               >
                 <X size={20} />
               </button>
             </div>
-            
+
             <form onSubmit={submitUpdate} style={modalStyles.form}>
               <div style={modalStyles.formGrid}>
                 <div style={modalStyles.leftColumn}>
                   <div style={modalStyles.inputGroup}>
                     <label style={modalStyles.label}>Product Name *</label>
-                    <input 
-                      value={editingProduct.name || ""} 
-                      onChange={(e) => setEditField("name", e.target.value)} 
-                      required 
+                    <input
+                      value={editingProduct.name || ""}
+                      onChange={(e) => setEditField("name", e.target.value)}
+                      required
                       style={modalStyles.input}
                       placeholder="Enter product name"
                     />
                   </div>
 
                   <div style={modalStyles.inputRow}>
-                    <div style={{...modalStyles.inputGroup, flex: 1}}>
+                    <div style={{ ...modalStyles.inputGroup, flex: 1 }}>
                       <label style={modalStyles.label}>Price (LKR) *</label>
-                      <input 
-                        type="number" 
-                        value={editingProduct.price ?? ""} 
-                        onChange={(e) => setEditField("price", e.target.value)} 
-                        required 
+                      <input
+                        type="number"
+                        value={editingProduct.price ?? ""}
+                        onChange={(e) => setEditField("price", e.target.value)}
+                        required
                         style={modalStyles.input}
                         placeholder="0.00"
                         min="0"
                         step="0.01"
                       />
                     </div>
-                    
-                    <div style={{...modalStyles.inputGroup, flex: 1}}>
+
+                    <div style={{ ...modalStyles.inputGroup, flex: 1 }}>
                       <label style={modalStyles.label}>Category</label>
-                      <select 
-                        value={editingProduct.category || ""} 
-                        onChange={(e) => setEditField("category", e.target.value)} 
+                      <select
+                        value={editingProduct.category || ""}
+                        onChange={(e) => setEditField("category", e.target.value)}
                         style={modalStyles.select}
                       >
                         <option value="">Select category</option>
@@ -581,10 +578,10 @@ const ClothingPage = () => {
 
                   <div style={modalStyles.inputGroup}>
                     <label style={modalStyles.label}>Description</label>
-                    <textarea 
-                      value={editingProduct.description || ""} 
-                      onChange={(e) => setEditField("description", e.target.value)} 
-                      rows={4} 
+                    <textarea
+                      value={editingProduct.description || ""}
+                      onChange={(e) => setEditField("description", e.target.value)}
+                      rows={4}
                       style={modalStyles.textarea}
                       placeholder="Describe the product features, materials, fit, etc."
                     />
@@ -655,9 +652,9 @@ const ClothingPage = () => {
                     <div style={modalStyles.colorGrid}>
                       {availableColors.map((color) => {
                         const isSelected = (editingProduct.colors || []).includes(color.name);
-                        
+
                         return (
-                          <div 
+                          <div
                             key={color.name}
                             onClick={() => toggleColor(color.name)}
                             style={{
@@ -665,7 +662,7 @@ const ClothingPage = () => {
                               ...(isSelected ? modalStyles.colorOptionSelected : {})
                             }}
                           >
-                            <div 
+                            <div
                               style={{
                                 ...modalStyles.colorSwatch,
                                 background: color.hex,
@@ -698,11 +695,11 @@ const ClothingPage = () => {
                           </div>
                         )}
                       </div>
-                      
+
                       <div style={modalStyles.uploadActions}>
-                        <input 
-                          type="file" 
-                          accept="image/*" 
+                        <input
+                          type="file"
+                          accept="image/*"
                           onChange={onFileChange}
                           style={{ display: 'none' }}
                           id="image-upload"
@@ -712,7 +709,7 @@ const ClothingPage = () => {
                           Choose Image
                         </label>
                         {previewSrc && (
-                          <button 
+                          <button
                             type="button"
                             onClick={() => {
                               setSelectedFile(null);
@@ -742,7 +739,7 @@ const ClothingPage = () => {
                           const colorData = availableColors.find(c => c.name === colorName);
                           return (
                             <span key={i} style={modalStyles.selectedColorTag}>
-                              <div 
+                              <div
                                 style={{
                                   ...modalStyles.selectedColorDot,
                                   background: colorData?.hex || '#ccc',
@@ -773,18 +770,18 @@ const ClothingPage = () => {
                     </>
                   )}
                 </div>
-                
+
                 <div style={modalStyles.actions}>
-                  <button 
-                    type="button" 
-                    onClick={() => setIsEditing(false)} 
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(false)}
                     style={modalStyles.cancelBtn}
                     disabled={submitting}
                   >
                     Cancel
                   </button>
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     style={{
                       ...modalStyles.saveBtn,
                       ...(submitting ? modalStyles.saveBtnDisabled : {})
@@ -818,7 +815,7 @@ const HoverStyles = () => {
       .filter-item:hover{color:#4a5568 !important;border-left-color:#cbd5e0}
     `;
     document.head.appendChild(s);
-    return () => {};
+    return () => { };
   }, []);
   return null;
 };
@@ -856,22 +853,22 @@ const styles = {
 
 // Enhanced modal styles
 const modalStyles = {
-  overlay: { 
-    position: "fixed", 
-    inset: 0, 
-    background: "rgba(0,0,0,0.6)", 
-    display: "flex", 
-    alignItems: "center", 
-    justifyContent: "center", 
+  overlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.6)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     zIndex: 2000,
     backdropFilter: "blur(4px)"
   },
-  modal: { 
+  modal: {
     width: "90%",
-    maxWidth: 900, 
+    maxWidth: 900,
     maxHeight: "90vh",
-    background: "#fff", 
-    borderRadius: 16, 
+    background: "#fff",
+    borderRadius: 16,
     boxShadow: "0 25px 50px -12px rgba(0,0,0,0.4)",
     overflow: "hidden",
     display: "flex",
