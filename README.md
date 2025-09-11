@@ -1,4 +1,4 @@
-# 🛍️ MERN Product Recommender
+# 🛍️ Ecommerce Product Recommender
 
 An internship assignment project built using the **MERN Stack** (MongoDB, Express, React, Node.js).  
 The project implements **Product Management (CRUD with image uploads)**, a **Rule-based Recommendation System**, and extra features like **Wishlist, Recently Viewed, Filters, Search, color picker and Flash Sale Countdown**.  
