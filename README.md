@@ -183,8 +183,7 @@ npm start
 
 ## 📌 Submission
 
-* **GitHub Repo Link**: *(add your repo link here)*
-* Includes full source code, this README, and setup instructions.
+* **GitHub Repo Link**: *https://github.com/RashmikaAkash/ecommerce-product-recommender.git*
 
 ---
 
